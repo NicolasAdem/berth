@@ -1,0 +1,1503 @@
+<title>Harborview Berth Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Spectral:ital,wght@1,400;1,500&display=swap">
+<style>
+:root{
+  --paper:#F6F2E9; --surface:#FFFDF7; --surface-2:#EFE9DA; --sunk:#EAE3D2;
+  --ink:#14202A; --ink-2:#4B5C66; --ink-3:#8A97A0;
+  --rule:#D4C9B2; --rule-2:#E7DFCE;
+  --water:#DCEAEC; --water-deep:#BBD6DC; --water-line:#8FB8C1;
+  --land:#EADCBC;
+  --sig:#BE1A6F; --sig-soft:#F7DCEB; --sig-ink:#8E0F51;
+  --ok:#2C6F4E; --ok-soft:#DCEBDF;
+  --warn:#A9670F; --warn-soft:#F6E8CE;
+  --hull:#2B4A57; --hull-fill:#A9C8D1; --hull-fill-2:#C6DBE1;
+  --shadow:0 1px 2px rgba(20,32,42,.07), 0 6px 18px -10px rgba(20,32,42,.22);
+  --ff-ui:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  --ff-data:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ff-chart:"Spectral",Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#0B1317; --surface:#111C22; --surface-2:#17242B; --sunk:#0E181D;
+  --ink:#E7EEF1; --ink-2:#9CB0B9; --ink-3:#6B7F88;
+  --rule:#2B3D46; --rule-2:#1D2B32;
+  --water:#102C35; --water-deep:#17414E; --water-line:#2E6373;
+  --land:#272517;
+  --sig:#FF6BB0; --sig-soft:#371324; --sig-ink:#FF9ACB;
+  --ok:#5FCB8E; --ok-soft:#102C1D; --warn:#E3A14A; --warn-soft:#2E220E;
+  --hull:#84BACB; --hull-fill:#23454F; --hull-fill-2:#1B373F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  --paper:#0B1317; --surface:#111C22; --surface-2:#17242B; --sunk:#0E181D;
+  --ink:#E7EEF1; --ink-2:#9CB0B9; --ink-3:#6B7F88;
+  --rule:#2B3D46; --rule-2:#1D2B32;
+  --water:#102C35; --water-deep:#17414E; --water-line:#2E6373;
+  --land:#272517;
+  --sig:#FF6BB0; --sig-soft:#371324; --sig-ink:#FF9ACB;
+  --ok:#5FCB8E; --ok-soft:#102C1D; --warn:#E3A14A; --warn-soft:#2E220E;
+  --hull:#84BACB; --hull-fill:#23454F; --hull-fill-2:#1B373F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ff-ui);
+  font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:var(--ff-data);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--sig);outline-offset:2px;border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- shell ---------- */
+.shell{display:flex;flex-direction:column;min-height:100%}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--rule)}
+.top-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:10px 20px;max-width:1500px;margin:0 auto}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.brand b{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.brand .fac{font-size:11.5px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;
+  border-left:1px solid var(--rule);padding-left:10px}
+nav.tabs{display:flex;gap:2px;background:var(--sunk);padding:3px;border-radius:8px}
+nav.tabs button{background:none;border:0;padding:5px 13px;border-radius:6px;cursor:pointer;
+  font-size:13px;font-weight:500;color:var(--ink-2)}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--ink);
+  box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:600}
+.btn{border:1px solid var(--rule);background:var(--surface);border-radius:7px;
+  padding:6px 13px;cursor:pointer;font-size:13px;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink);font-weight:600}
+.btn.primary:hover{opacity:.88}
+.btn.sm{padding:3px 9px;font-size:12px}
+main{flex:1;max-width:1500px;width:100%;margin:0 auto;padding:18px 20px 60px}
+@media(max-width:560px){ .top-in{padding:10px 16px} main{padding:14px 16px 48px} .brand .fac{display:none} }
+
+/* ---------- notice ---------- */
+.notice{display:flex;gap:11px;align-items:flex-start;background:var(--surface);
+  border:1px solid var(--rule);border-left:3px solid var(--sig);border-radius:8px;
+  padding:11px 14px;margin-bottom:16px;font-size:13px;color:var(--ink-2)}
+.notice b{color:var(--ink);font-weight:600}
+.notice .x{margin-left:auto;background:none;border:0;cursor:pointer;color:var(--ink-3);
+  font-size:16px;line-height:1;padding:2px 4px}
+
+/* ---------- toolbar ---------- */
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.stepper{display:flex;align-items:center;gap:0;border:1px solid var(--rule);
+  border-radius:8px;overflow:hidden;background:var(--surface)}
+.stepper button{background:none;border:0;padding:6px 11px;cursor:pointer;color:var(--ink-2);font-size:15px}
+.stepper button:hover{background:var(--surface-2);color:var(--ink)}
+.stepper .label{padding:6px 14px;font-weight:600;font-size:13.5px;min-width:132px;text-align:center;
+  border-left:1px solid var(--rule-2);border-right:1px solid var(--rule-2)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{background:none;border:0;padding:6px 12px;cursor:pointer;font-size:12.5px;color:var(--ink-2)}
+.seg button+button{border-left:1px solid var(--rule-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);font-weight:600}
+.spacer{margin-left:auto}
+.demotoggle{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);
+  border:1px solid var(--rule);background:var(--surface);border-radius:8px;padding:5px 11px;cursor:pointer}
+.demotoggle input{accent-color:var(--sig);margin:0}
+select.btn{padding:6px 9px;-webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px,5px 5px;
+  background-repeat:no-repeat;padding-right:28px}
+
+/* ---------- chart ---------- */
+.chartwrap{background:var(--surface);border:1px solid var(--rule);border-radius:10px;
+  box-shadow:var(--shadow);overflow:hidden}
+.chartscroll{overflow-x:auto;overflow-y:hidden}
+.chartscroll svg{display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--rule-2);
+  font-size:11.5px;color:var(--ink-2);align-items:center}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:22px;height:11px;border-radius:2px;display:inline-block;border:1px solid var(--hull)}
+
+/* ---------- stats ---------- */
+.statrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--rule-2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.stat{background:var(--surface);padding:13px 15px}
+.stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600}
+.stat .v{font-family:var(--ff-data);font-size:23px;font-weight:600;letter-spacing:-.02em;margin-top:3px}
+.stat .s{font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.stat .v.sig{color:var(--sig)}
+.stat .v.ok{color:var(--ok)}
+
+/* ---------- panels ---------- */
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:10px;
+  box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+.panel>h3{margin:0;padding:12px 16px;font-size:13px;font-weight:600;letter-spacing:.01em;
+  border-bottom:1px solid var(--rule-2);display:flex;align-items:center;gap:9px}
+.panel>h3 .n{font-family:var(--ff-data);font-size:11.5px;color:var(--ink-3);font-weight:500}
+.panel .body{padding:14px 16px}
+.panel p{margin:0 0 9px;max-width:68ch;color:var(--ink-2);font-size:13.5px}
+.panel p:last-child{margin-bottom:0}
+.panel p b{color:var(--ink)}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);
+  font-weight:600;padding:8px 12px;border-bottom:1px solid var(--rule);white-space:nowrap;
+  position:sticky;top:0;background:var(--surface)}
+td{padding:7px 12px;border-bottom:1px solid var(--rule-2);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+td.num{font-family:var(--ff-data);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.vname{font-weight:500}
+
+/* ---------- chips ---------- */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;
+  padding:1.5px 7px;border-radius:20px;letter-spacing:.02em;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.sig{background:var(--sig-soft);color:var(--sig-ink)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.mut{background:var(--surface-2);color:var(--ink-3)}
+.chip.dot::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+/* ---------- forms ---------- */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
+.field label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600}
+.field input,.field select,.field textarea{border:1px solid var(--rule);background:var(--surface);
+  border-radius:7px;padding:8px 10px;font-size:13.5px;width:100%}
+.field input:focus,.field select:focus{border-color:var(--sig)}
+.field .hint{font-size:11.5px;color:var(--ink-3)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:480px){.row2{grid-template-columns:1fr}}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(10,18,24,.42);z-index:60;backdrop-filter:blur(2px)}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:var(--surface);
+  border-left:1px solid var(--rule);z-index:61;display:flex;flex-direction:column;
+  box-shadow:-18px 0 50px -24px rgba(0,0,0,.45)}
+.drawer header{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rule)}
+.drawer header h2{margin:0;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.drawer .scrollarea{flex:1;overflow-y:auto;padding:16px 18px;
+  padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.drawer footer{padding:13px 18px;border-top:1px solid var(--rule);display:flex;gap:9px;
+  padding-bottom:calc(13px + env(safe-area-inset-bottom,0px))}
+.closeb{margin-left:auto;background:none;border:0;font-size:20px;cursor:pointer;color:var(--ink-3);line-height:1}
+
+/* ---------- verdict ---------- */
+.verdict{border-radius:9px;padding:12px 14px;margin:4px 0 14px;border:1px solid transparent}
+.verdict .vh{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;margin-bottom:4px}
+.verdict .vb{font-size:12.5px;line-height:1.5}
+.verdict.ok{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 35%,transparent);color:var(--ok)}
+.verdict.bad{background:var(--sig-soft);border-color:color-mix(in srgb,var(--sig) 35%,transparent);color:var(--sig-ink)}
+.verdict.unk{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 35%,transparent);color:var(--warn)}
+.verdict .vb{color:var(--ink-2)}
+.verdict.ok .vb,.verdict.bad .vb,.verdict.unk .vb{color:inherit;opacity:.92}
+.alt{display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid var(--rule);
+  border-radius:7px;margin-top:6px;font-size:12.5px;background:var(--surface)}
+.alt .btn{margin-left:auto}
+
+/* ---------- availability board ---------- */
+.availhead{display:flex;align-items:baseline;gap:9px;font-size:11px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--ink-3);font-weight:600;margin:16px 0 7px}
+.availhead .sub{text-transform:none;letter-spacing:0;font-weight:400;margin-left:auto}
+.availlist{display:flex;flex-direction:column;gap:4px}
+.availrow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;
+  width:100%;text-align:left;background:var(--surface);border:1px solid var(--rule);
+  border-radius:8px;padding:8px 11px;cursor:pointer;font-size:13px}
+.availrow:hover{border-color:var(--ink-3)}
+.availrow.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.availrow .ab-name{font-weight:500}
+.availrow .ab-len,.availrow .ab-free{font-size:11.5px;color:var(--ink-3)}
+@media(max-width:420px){.availrow{grid-template-columns:1fr auto}.availrow .ab-len{display:none}}
+
+/* ---------- day board ---------- */
+.dayboard{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule-2);
+  border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.dayboard section{background:var(--surface);padding:11px 14px;min-width:0}
+.dayboard h4{margin:0 0 7px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--ink-3);font-weight:600;display:flex;gap:6px;align-items:baseline}
+.dayboard h4 b{font-family:var(--ff-data);font-size:13px;color:var(--ink);font-weight:600}
+.dayboard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+.dayboard li button{width:100%;text-align:left;background:none;border:0;padding:2px 0;cursor:pointer;
+  font-size:12.5px;display:flex;gap:7px;align-items:baseline;border-radius:4px}
+.dayboard li button:hover .nm{text-decoration:underline}
+.dayboard .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dayboard .at{margin-left:auto;font-family:var(--ff-data);font-size:11px;color:var(--ink-3);white-space:nowrap}
+.dayboard .none{font-size:12.5px;color:var(--ink-3)}
+@media(max-width:700px){.dayboard{grid-template-columns:1fr}}
+
+/* ---------- misc ---------- */
+.meter{height:5px;background:var(--sunk);border-radius:3px;overflow:hidden;min-width:56px}
+.meter i{display:block;height:100%;background:var(--hull);border-radius:3px}
+.meter i.sig{background:var(--sig)}
+.kbd{font-family:var(--ff-data);font-size:11px;border:1px solid var(--rule);border-bottom-width:2px;
+  border-radius:4px;padding:0 5px;color:var(--ink-2);background:var(--surface-2)}
+.empty{padding:34px 16px;text-align:center;color:var(--ink-3);font-size:13px}
+.sub{font-size:12.5px;color:var(--ink-3)}
+a{color:var(--sig-ink)}
+.sronly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tiplist{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--ink-2)}
+.tiplist li{margin-bottom:3px}
+.split{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+@media(max-width:900px){.split{grid-template-columns:1fr}}
+.popover{position:absolute;z-index:50;background:var(--surface);border:1px solid var(--rule);
+  border-radius:9px;box-shadow:var(--shadow);padding:12px 14px;width:270px;font-size:12.5px}
+.popover h4{margin:0 0 3px;font-size:14px;font-weight:700}
+.popover dl{margin:8px 0 0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12px}
+.popover dt{color:var(--ink-3)}
+.popover dd{margin:0;font-family:var(--ff-data);text-align:right}
+</style>
+
+<div class="shell">
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <b>Berth</b>
+      <span class="fac">Harborview Marine Research Center</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" id="tab-quay"  aria-selected="true"  data-view="quay">Quay</button>
+      <button role="tab" id="tab-fleet" aria-selected="false" data-view="fleet">Fleet</button>
+      <button role="tab" id="tab-audit" aria-selected="false" data-view="audit">Import audit</button>
+    </nav>
+    <button class="btn primary" id="newres">New reservation</button>
+  </div>
+</header>
+
+<main>
+  <!-- ══════════════ QUAY ══════════════ -->
+  <section id="view-quay">
+    <div class="notice" id="archive-notice">
+      <div>
+        <b>Two sets of bookings are loaded.</b> The <b>example season</b> around today is made up, so the
+        waterfront is not empty — but every length in it is real, taken from the register tabs. Behind it sits the
+        <b>imported archive</b>: 2,244 reservations read out of
+        <span class="mono">Dock_Schedule_-_Synthetic_Sample.xlsx</span> (Aug 1997 – Dec 2019), where hatched blocks
+        are vessels whose length was never recorded and the system holds the whole berth. Turn the example season
+        off with the switch on the right.
+      </div>
+      <button class="x" id="dismiss-notice" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <div class="dayboard" id="dayboard"></div>
+
+    <div class="toolbar">
+      <div class="stepper">
+        <button id="prev" aria-label="Previous month">&#8249;</button>
+        <div class="label mono" id="monthlabel">—</div>
+        <button id="next" aria-label="Next month">&#8250;</button>
+      </div>
+      <button class="btn" id="today">Today</button>
+      <select class="btn" id="yearjump" aria-label="Jump to year"></select>
+      <div class="seg" role="group" aria-label="Scale">
+        <button data-zoom="month" aria-pressed="true">Month</button>
+        <button data-zoom="quarter" aria-pressed="false">Quarter</button>
+      </div>
+      <div class="spacer"></div>
+      <label class="demotoggle"><input type="checkbox" id="demotoggle" checked> Example season</label>
+      <div class="sub mono" id="windowstat">—</div>
+    </div>
+
+    <div class="chartwrap">
+      <div class="chartscroll" id="chartscroll"><svg id="chart" role="img"
+        aria-label="Berth space-time chart: vertical axis is linear feet along each berth, horizontal axis is days"></svg></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--hull-fill)"></i> vessel, length on file</span>
+        <span><i class="sw" style="background:var(--water-deep);border-style:dashed"></i> length unrecorded &mdash; whole berth held</span>
+        <span><i class="sw" style="background:var(--land);border-color:var(--warn)"></i> event</span>
+        <span><i class="sw" style="background:var(--sig-soft);border-color:var(--sig)"></i> closed to docking</span>
+        <span><i class="sw" style="background:var(--sig);border-color:var(--sig)"></i> conflict</span>
+      </div>
+    </div>
+
+    <div class="statrow" id="quaystats" style="margin-top:16px"></div>
+
+    <div class="panel" id="conflictpanel" hidden>
+      <h3>Conflicts in view <span class="n" id="conflictn"></span></h3>
+      <div class="tablewrap"><table id="conflicttable"></table></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ FLEET ══════════════ -->
+  <section id="view-fleet" hidden>
+    <div class="statrow" id="fleetstats"></div>
+
+    <div class="panel">
+      <h3>Measure-up queue <span class="n">highest-leverage lengths to capture first</span></h3>
+      <div class="body">
+        <p>Fit can only be checked against a recorded length overall. Berth-time is concentrated in a
+        handful of regulars, so the fastest route to a verifiable schedule is to measure these vessels
+        rather than the whole fleet. Each row shows how much of the 23-year record it unlocks.</p>
+      </div>
+      <div class="tablewrap"><table id="queuetable"></table></div>
+    </div>
+
+    <div class="panel">
+      <h3>Fleet register <span class="n" id="fleetn"></span></h3>
+      <div class="body" style="padding-bottom:0">
+        <div class="field" style="max-width:340px">
+          <label for="fleetsearch">Search vessel, operator</label>
+          <input id="fleetsearch" type="search" placeholder="e.g. Golden Compass, Harbor Institute" autocomplete="off">
+        </div>
+      </div>
+      <div class="tablewrap"><table id="fleettable"></table></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ AUDIT ══════════════ -->
+  <section id="view-audit" hidden>
+    <div class="panel">
+      <h3>What the import found</h3>
+      <div class="body">
+        <p>Every year-sheet in the workbook was read cell by cell. A reservation in that format is a run of
+        same-coloured cells with a name in the first one, so the reader reconstructs each stay from the fill
+        runs and merged ranges rather than from any stored start and end date. What follows is what came out,
+        and it is the argument for replacing the grid.</p>
+      </div>
+      <div class="statrow" id="auditstats" style="margin:0;border-radius:0;border-left:0;border-right:0"></div>
+    </div>
+
+    <div class="split">
+      <div class="panel">
+        <h3>Overlapping assignments <span class="n" id="dbln"></span></h3>
+        <div class="body"><p>Two occupants booked onto the same berth at the same time. On a
+        410&#8242; pier that may be perfectly legal &mdash; two vessels fit alongside each other. The grid
+        cannot tell you which, because it records neither position nor length.</p></div>
+        <div class="tablewrap"><table id="dbltable"></table></div>
+      </div>
+      <div class="panel">
+        <h3>Vessels longer than the berth <span class="n" id="overn"></span></h3>
+        <div class="body"><p>Checked against the length embedded in the vessel-register tabs. This
+        is the whole checkable sample &mdash; and a quarter of it fails.</p></div>
+        <div class="tablewrap"><table id="overtable"></table></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Structural problems with the spreadsheet</h3>
+      <div class="body" id="structural"></div>
+    </div>
+
+    <div class="panel">
+      <h3>How this system decides</h3>
+      <div class="body" id="rules"></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<div id="drawerhost"></div>
+<div id="pophost"></div>
+
+<script id="seed" type="application/json">{"epoch":"1997-01-01","berths":[{"id":"npw","name":"North Pier West","len":410,"type":"linear"},{"id":"npe","name":"North Pier East","len":240,"type":"linear"},{"id":"npf","name":"North Pier Face","len":75,"type":"linear"},{"id":"inc","name":"Inner Channel","len":55,"type":"linear"},{"id":"sfw","name":"South Float West","len":90,"type":"linear"},{"id":"sfe","name":"South Float East","len":90,"type":"linear"},{"id":"nfp","name":"North Finger Piers","len":null,"type":"slips"},{"id":"scs","name":"Small craft slips","len":null,"type":"slips"},{"id":"uns","name":"Unassigned","len":null,"type":"none"}],"vessels":[["Barge Blue Current",null,null,null,null,null,"schedule"],["Barge Blue Horizon",null,null,null,null,null,"schedule"],["Barge Blue Petrel",null,null,null,null,null,"schedule"],["Barge Blue Sextant",null,null,null,null,null,"schedule"],["Barge Blue Wind",null,null,null,null,null,"schedule"],["Barge Bright Osprey",null,null,null,null,null,"schedule"],["Barge Bright Sound",null,null,null,null,null,"schedule"],["Barge Bright Star",null,null,null,null,null,"schedule"],["Barge Clear Ledge",null,null,null,null,null,"schedule"],["Barge Coral Skua",null,null,null,null,null,"schedule"],["Barge Coral Tide",null,null,null,null,null,"schedule"],["Barge Deep Lantern",null,null,null,null,null,"schedule"],["Barge Deep Tern",null,null,null,null,null,"schedule"],["Barge Far Cove",null,null,null,null,null,"schedule"],["Barge Golden Star",null,null,null,null,null,"schedule"],["Barge Grey Dory",null,null,null,null,null,"schedule"],["Barge Grey Sound",null,null,null,null,null,"schedule"],["Barge High Osprey",null,null,null,null,null,"schedule"],["Barge High Voyager",100,null,null,null,"finley.garland@example.com","registry"],["Barge Iron Kestrel",null,null,null,null,null,"schedule"],["Barge Long Ledge",40,null,null,"Cell: 555-0144","quinn.oakes@example.com","registry-only"],["Barge Long Voyager",null,null,null,null,null,"schedule"],["Barge Northern Anchor",null,null,null,null,null,"schedule"],["Barge Northern Drift",52,null,null,"Harbor Institute","hayden.corwin@example.com","registry-only"],["Barge Northern Marlin",24,8,null,"Bayline Charters",null,"registry-only"],["Barge Quiet Horizon",null,null,null,null,null,"schedule"],["Barge Quiet Lantern",null,null,null,null,null,"schedule"],["Barge Quiet Wind",null,null,null,null,null,"schedule"],["Barge Salt Compass",null,null,null,null,null,"schedule"],["Barge Salt Dory",null,null,null,null,null,"schedule"],["Barge Salt Ledge",52,null,null,"Cell: 555-0166","dana.jarvis@example.com","registry-only"],["Barge Salt Reef",null,null,null,null,null,"schedule"],["Barge Silver Beacon",null,null,null,null,null,"schedule"],["Barge Silver Voyager",null,null,null,null,null,"schedule"],["Barge Swift Tern",null,null,null,null,null,"schedule"],["Barge Western Cove",null,null,null,null,null,"schedule"],["Barge Western Dory",null,null,null,null,null,"schedule"],["Barge Western Tern",100,null,null,null,"rowan.oakes@example.com","registry-only"],["Barge Western Voyager",null,null,null,null,null,"schedule"],["Barge Wild Horizon",52,null,null,"Cell: 555-0188","casey.whitlock@example.com","registry-only"],["Barge Wild Osprey",null,null,null,null,null,"schedule"],["Barge Wild Skua",null,null,null,null,null,"schedule"],["F/V Amber Beacon",null,null,null,null,null,"schedule"],["F/V Amber Current",null,null,null,null,null,"schedule"],["F/V Amber Sound",null,null,null,null,null,"schedule"],["F/V Bright Compass",120,null,"Seaway Education Trust","Cell: 555-0106","jesse.oakes@example.com","registry-only"],["F/V Bright Heron",32,null,null,"Northwind Offshore",null,"registry-only"],["F/V Bright Horizon",170,null,null,"Jesse Dunmore",null,"registry-only"],["F/V Bright Ketch",null,null,null,null,null,"schedule"],["F/V Clear Compass",null,null,null,null,null,"schedule"],["F/V Clear Ketch",null,null,null,null,null,"schedule"],["F/V Clear Meridian",24,null,"Regional Fisheries Agency","Cell: 555-0133",null,"registry-only"],["F/V Clear Skua",null,null,null,null,null,"schedule"],["F/V Clear Voyager",null,null,null,null,null,"schedule"],["F/V Coral Ketch",120,null,null,"Cell: 555-0184",null,"registry-only"],["F/V Coral Marlin",null,null,null,null,null,"schedule"],["F/V Coral Sextant",null,null,null,null,null,"schedule"],["F/V Deep Cove",null,null,null,null,null,"schedule"],["F/V Far Petrel",24,null,null,"Cell: 555-0190",null,"registry-only"],["F/V Far Sound",null,null,null,null,null,"schedule"],["F/V Golden Petrel",145,null,"Lakeshore Research Group","Cell: 555-0196",null,"registry-only"],["F/V Golden Sextant",null,null,null,null,null,"schedule"],["F/V Green Dory",null,null,null,null,null,"schedule"],["F/V Green Heron",32,null,null,"Cell: 555-0143","avery.danforth@example.com","registry-only"],["F/V Green Reef",null,null,null,null,null,"schedule"],["F/V Grey Anchor",null,null,null,null,null,"schedule"],["F/V Grey Gannet",null,null,null,null,null,"schedule"],["F/V Grey Meridian",null,null,null,null,null,"schedule"],["F/V High Lantern",null,null,null,null,null,"schedule"],["F/V High Skua",120,null,"Coastal Survey Partners","Cell: 555-0147","riley.bexley@example.com","registry"],["F/V Iron Beacon",100,null,"Coastal Survey Partners","Cell: 555-0183","elliot.garland@example.com","registry-only"],["F/V Iron Ketch",65,null,null,"Bayline Charters","dana.ellery@example.com","registry-only"],["F/V Iron Ledge",null,null,null,null,null,"schedule"],["F/V Iron Sextant",null,null,null,null,null,"schedule"],["F/V Iron Tide",null,null,null,null,null,"schedule"],["F/V Iron Wind",null,null,null,null,null,"schedule"],["F/V Long Beacon",null,null,null,null,null,"schedule"],["F/V Long Drift",null,null,null,null,null,"schedule"],["F/V Long Heron",null,null,null,null,null,"schedule"],["F/V Long Strand",null,null,null,null,null,"schedule"],["F/V Northern Dory",null,null,null,null,null,"schedule"],["F/V Northern Tern",null,null,null,null,null,"schedule"],["F/V Northern Voyager",null,null,null,null,null,"schedule"],["F/V Quiet Skua",null,null,null,null,null,"schedule"],["F/V Salt Fathom",null,null,null,null,null,"schedule"],["F/V Salt Harbor",null,null,null,null,null,"schedule"],["F/V Salt Ketch",null,null,null,null,null,"schedule"],["F/V Silver Drift",null,null,null,null,null,"schedule"],["F/V Silver Lantern",null,null,null,null,null,"schedule"],["F/V Silver Reef",null,null,null,null,null,"schedule"],["F/V Silver Strand",null,null,null,null,null,"schedule"],["F/V Swift Compass",null,null,null,null,null,"schedule"],["F/V Swift Dory",null,null,null,null,null,"schedule"],["F/V Swift Fathom",null,null,null,null,null,"schedule"],["F/V Swift Horizon",null,null,null,null,null,"schedule"],["F/V Swift Meridian",null,null,null,null,null,"schedule"],["F/V Western Gannet",null,null,null,null,null,"schedule"],["F/V Western Meridian",null,null,null,null,null,"schedule"],["F/V Western Osprey",null,null,null,null,null,"schedule"],["F/V Western Sound",null,null,null,null,null,"schedule"],["M/V Amber Dory",null,null,null,null,null,"schedule"],["M/V Amber Ketch",null,null,null,null,null,"schedule"],["M/V Amber Meridian",null,null,null,null,null,"schedule"],["M/V Amber Petrel",null,null,null,null,null,"schedule"],["M/V Amber Skua",null,null,null,null,null,"schedule"],["M/V Amber Tern",null,null,null,null,null,"schedule"],["M/V Blue Gannet",null,null,null,null,null,"schedule"],["M/V Blue Lantern",null,null,null,null,null,"schedule"],["M/V Blue Osprey",100,null,null,"Cell: 555-0132","rowan.norwood@example.com","registry-only"],["M/V Blue Strand",null,null,null,null,null,"schedule"],["M/V Blue Tern",52,null,"Lakeshore Research Group",null,null,"registry"],["M/V Bright Beacon",null,null,null,null,null,"schedule"],["M/V Bright Cove",null,null,null,null,null,"schedule"],["M/V Bright Drift",null,null,null,null,null,"schedule"],["M/V Bright Gannet",null,null,null,null,null,"schedule"],["M/V Bright Reef",null,null,null,null,null,"schedule"],["M/V Bright Skua",null,null,null,null,null,"schedule"],["M/V Bright Voyager",null,null,null,null,null,"schedule"],["M/V Clear Cove",46,null,null,null,null,"registry-only"],["M/V Clear Current",null,null,null,null,null,"schedule"],["M/V Clear Petrel",46,null,"Lakeshore Research Group","Dana Quill","marley.norwood@example.com","registry-only"],["M/V Clear Tide",null,null,null,null,null,"schedule"],["M/V Coral Beacon",null,null,null,null,null,"schedule"],["M/V Coral Drift",100,null,null,"Capt. Alex Bexley","quinn.bexley@example.com","registry-only"],["M/V Coral Horizon",null,null,null,null,null,"schedule"],["M/V Coral Kestrel",null,null,null,null,null,"schedule"],["M/V Coral Lantern",null,null,null,null,null,"schedule"],["M/V Coral Ledge",null,null,null,null,null,"schedule"],["M/V Coral Petrel",null,null,null,null,null,"schedule"],["M/V Coral Star",null,null,null,null,null,"schedule"],["M/V Deep Anchor",null,null,null,null,null,"schedule"],["M/V Deep Beacon",null,null,null,null,null,"schedule"],["M/V Deep Drift",null,null,null,null,null,"schedule"],["M/V Deep Gannet",32,null,null,"Capt. Lee Marsh","sage.ellery@example.com","registry-only"],["M/V Deep Ledge",null,null,null,null,null,"schedule"],["M/V Deep Marlin",null,null,null,null,null,"schedule"],["M/V Deep Meridian",145,null,null,"Cell: 555-0163","jamie.dunmore@example.com","registry-only"],["M/V Deep Reef",24,null,null,"Capt. Dana Danforth","elliot.everly@example.com","registry"],["M/V Deep Sextant",24,null,"Regional Fisheries Agency","Capt. Lee Thorne","harper.kendrick@example.com","registry-only"],["M/V Deep Sound",null,null,null,null,null,"schedule"],["M/V Far Anchor",120,null,null,"Cell: 555-0141","alex.bramble@example.com","registry-only"],["M/V Far Beacon",null,null,null,null,null,"schedule"],["M/V Far Drift",null,null,null,null,null,"schedule"],["M/V Far Fathom",72,null,null,"Cell: 555-0167","taylor.bexley@example.com","registry-only"],["M/V Far Heron",null,null,null,null,null,"schedule"],["M/V Far Kestrel",null,null,null,null,null,"schedule"],["M/V Far Voyager",null,null,null,null,null,"schedule"],["M/V Golden Drift",null,null,null,null,null,"schedule"],["M/V Golden Gannet",null,null,null,null,null,"schedule"],["M/V Golden Ledge",null,null,null,null,null,"schedule"],["M/V Golden Skua",52,null,"Tidewater Marine Services","Cell: 555-0126","riley.garland@example.com","registry"],["M/V Golden Strand",null,null,null,null,null,"schedule"],["M/V Green Anchor",null,null,null,null,null,"schedule"],["M/V Green Beacon",null,null,null,null,null,"schedule"],["M/V Green Gannet",null,null,null,null,null,"schedule"],["M/V Green Kestrel",100,null,"Tidewater Marine Services","Bayline Charters","alex.garland@example.com","registry-only"],["M/V Green Ledge",null,null,null,null,null,"schedule"],["M/V Green Tern",null,null,null,null,null,"schedule"],["M/V Grey Compass",null,null,null,null,null,"schedule"],["M/V Grey Cove",null,null,null,null,null,"schedule"],["M/V Grey Harbor",null,null,null,null,null,"schedule"],["M/V Grey Star",120,null,null,"Cell: 555-0107",null,"registry-only"],["M/V Grey Tern",65,null,"Gulf Coast University","Cell: 555-0171","quinn.bexley@example.com","registry-only"],["M/V High Beacon",null,null,null,null,null,"schedule"],["M/V High Cove",null,null,null,null,null,"schedule"],["M/V High Current",170,null,null,"Harbor Institute","marley.hollis@example.com","registry-only"],["M/V High Ledge",40,null,null,"Marley Bramble","dana.quill@example.com","registry-only"],["M/V High Strand",145,null,"Gulf Coast University","Avery Corwin","blake.ingram@example.com","registry-only"],["M/V High Wind",null,null,null,null,null,"schedule"],["M/V Iron Fathom",null,null,null,null,null,"schedule"],["M/V Iron Harbor",100,null,null,"Capt. Drew Ransom",null,"registry-only"],["M/V Iron Heron",100,null,null,null,null,"registry"],["M/V Iron Horizon",null,null,null,null,null,"schedule"],["M/V Iron Sound",145,null,"Open Water Sailing School","Noel Everly","emerson.hollis@example.com","registry-only"],["M/V Iron Tern",null,null,null,null,null,"schedule"],["M/V Long Cove",null,null,null,null,null,"schedule"],["M/V Long Drift",52,null,null,"Capt. Taylor Dunmore","harper.pembroke@example.com","registry-only"],["M/V Long Sound",null,null,null,null,null,"schedule"],["M/V Long Tern",null,null,null,null,null,"schedule"],["M/V Long Wind",40,null,null,null,"alex.oakes@example.com","registry"],["M/V Northern Current",null,null,null,null,null,"schedule"],["M/V Northern Gannet",85,null,"Gulf Coast University","Cell: 555-0152","sage.fairweather@example.com","registry-only"],["M/V Northern Harbor",null,null,null,null,null,"schedule"],["M/V Northern Heron",null,null,null,null,null,"schedule"],["M/V Northern Kestrel",null,null,null,null,null,"schedule"],["M/V Northern Ketch",120,null,"Gulf Coast University","Drew Calloway","kendall.calloway@example.com","registry-only"],["M/V Northern Petrel",null,null,null,null,null,"schedule"],["M/V Northern Tide",null,null,null,null,null,"schedule"],["M/V Quiet Compass",null,null,null,null,null,"schedule"],["M/V Quiet Current",null,null,null,null,null,"schedule"],["M/V Quiet Drift",46,null,null,"Capt. Riley Quill","sage.quill@example.com","registry-only"],["M/V Quiet Ledge",null,null,null,null,null,"schedule"],["M/V Quiet Petrel",null,null,null,null,null,"schedule"],["M/V Quiet Reef",null,null,null,null,null,"schedule"],["M/V Quiet Sextant",null,null,null,null,null,"schedule"],["M/V Quiet Tern",145,null,null,"Harbor Institute","sage.kendrick@example.com","registry-only"],["M/V Salt Meridian",null,null,null,null,null,"schedule"],["M/V Salt Petrel",null,null,null,null,null,"schedule"],["M/V Salt Sextant",null,null,null,null,null,"schedule"],["M/V Salt Wind",170,null,null,"Capt. Marley Vance","kai.yardley@example.com","registry-only"],["M/V Silver Dory",null,null,null,null,null,"schedule"],["M/V Silver Kestrel",46,null,null,"Capt. Finley Danforth","dana.whitlock@example.com","registry-only"],["M/V Silver Ledge",72,null,null,"Bayline Charters",null,"registry-only"],["M/V Silver Marlin",null,null,null,null,null,"schedule"],["M/V Silver Sound",null,null,null,null,null,"schedule"],["M/V Swift Cove",145,null,null,"Cell: 555-0139","morgan.danforth@example.com","registry-only"],["M/V Swift Petrel",null,null,null,null,null,"schedule"],["M/V Swift Sextant",72,null,"Lakeshore Research Group","Capt. Jamie Garland","noel.quill@example.com","registry-only"],["M/V Swift Strand",40,null,"Tidewater Marine Services","Cell: 555-0132",null,"registry-only"],["M/V Swift Voyager",null,null,null,null,null,"schedule"],["M/V Western Anchor",65,null,null,"Cell: 555-0107","marley.danforth@example.com","registry-only"],["M/V Western Harbor",null,null,null,null,null,"schedule"],["M/V Western Horizon",null,null,null,null,null,"schedule"],["M/V Western Marlin",null,null,null,null,null,"schedule"],["M/V Western Petrel",46,null,"Coastal Survey Partners","Capt. Reese Fairweather","jamie.vance@example.com","registry-only"],["M/V Wild Compass",null,null,null,null,null,"schedule"],["M/V Wild Dory",52,null,null,"Capt. Reese Ashford","morgan.calloway@example.com","registry-only"],["M/V Wild Fathom",null,null,null,null,null,"schedule"],["M/V Wild Reef",null,null,null,null,null,"schedule"],["M/V Wild Sextant",100,null,null,null,null,"registry-only"],["M/V Wild Star",24,12,null,"Capt. Sage Abbott","kendall.oakes@example.com","registry-only"],["M/Y Blue Compass",null,null,null,null,null,"schedule"],["M/Y Blue Dory",null,null,null,null,null,"schedule"],["M/Y Blue Fathom",46,null,null,"Capt. Finley Ashford",null,"registry-only"],["M/Y Blue Skua",null,null,null,null,null,"schedule"],["M/Y Blue Tide",null,null,null,null,null,"schedule"],["M/Y Bright Marlin",null,null,null,null,null,"schedule"],["M/Y Clear Gannet",null,null,null,null,null,"schedule"],["M/Y Clear Reef",null,null,null,null,null,"schedule"],["M/Y Clear Star",120,null,"State Marine Academy","Capt. Drew Fenwick","kai.vance@example.com","registry-only"],["M/Y Clear Wind",32,null,null,null,"skyler.marsh@example.com","registry-only"],["M/Y Coral Dory",null,null,null,null,null,"schedule"],["M/Y Coral Osprey",170,null,null,"Capt. Reese Yardley","taylor.garland@example.com","registry-only"],["M/Y Coral Wind",40,null,null,"Capt. Kai Calloway","blake.underhill@example.com","registry"],["M/Y Deep Compass",null,null,null,null,null,"schedule"],["M/Y Deep Horizon",null,null,null,null,null,"schedule"],["M/Y Deep Petrel",null,null,null,null,null,"schedule"],["M/Y Far Horizon",170,null,null,"Cell: 555-0138","morgan.dunmore@example.com","registry-only"],["M/Y Far Skua",null,null,null,null,null,"schedule"],["M/Y Golden Harbor",null,null,null,null,null,"schedule"],["M/Y Golden Kestrel",null,null,null,null,null,"schedule"],["M/Y Golden Wind",null,null,null,null,null,"schedule"],["M/Y Green Beacon",145,null,null,"Capt. Sage Vance",null,"registry-only"],["M/Y Green Horizon",null,null,null,null,null,"schedule"],["M/Y Green Lantern",null,null,null,null,null,"schedule"],["M/Y Green Tide",null,null,null,null,null,"schedule"],["M/Y Grey Heron",52,null,null,"Capt. Riley Thorne","lee.ashford@example.com","registry"],["M/Y Grey Horizon",46,null,null,"Cell: 555-0103",null,"registry-only"],["M/Y Grey Osprey",null,null,null,null,null,"schedule"],["M/Y High Anchor",40,null,null,"Cell: 555-0129","marley.ellery@example.com","registry-only"],["M/Y High Sextant",null,null,null,null,null,"schedule"],["M/Y High Tern",null,null,null,null,null,"schedule"],["M/Y Iron Gannet",170,null,null,"Sage Sterling",null,"registry-only"],["M/Y Iron Petrel",120,null,"Gulf Coast University","Cell: 555-0162","rowan.fairweather@example.com","registry-only"],["M/Y Iron Voyager",null,null,null,null,null,"schedule"],["M/Y Long Dory",52,null,null,"Harbor Institute","riley.quill@example.com","registry-only"],["M/Y Long Meridian",null,null,null,null,null,"schedule"],["M/Y Long Petrel",null,null,null,null,null,"schedule"],["M/Y Northern Compass",null,null,null,null,null,"schedule"],["M/Y Northern Cove",32,null,null,"Capt. Avery Quill","hayden.ellery@example.com","registry-only"],["M/Y Quiet Cove",null,null,null,null,null,"schedule"],["M/Y Quiet Voyager",null,null,null,null,null,"schedule"],["M/Y Salt Cove",null,null,null,null,null,"schedule"],["M/Y Salt Dory",85,null,null,"Capt. Parker Norwood",null,"registry-only"],["M/Y Salt Gannet",145,null,null,"Capt. Cameron Ingram","harper.fenwick@example.com","registry-only"],["M/Y Salt Horizon",null,null,null,null,null,"schedule"],["M/Y Salt Sound",null,null,null,null,null,"schedule"],["M/Y Silver Compass",null,null,null,null,null,"schedule"],["M/Y Silver Ketch",null,null,null,null,null,"schedule"],["M/Y Silver Sextant",null,null,null,null,null,"schedule"],["M/Y Swift Anchor",100,null,null,"Capt. Dana Jarvis","jamie.quill@example.com","registry-only"],["M/Y Swift Dory",85,null,null,"Capt. Sage Danforth",null,"registry-only"],["M/Y Swift Drift",null,null,null,null,null,"schedule"],["M/Y Swift Kestrel",52,null,"Open Water Sailing School",null,"marley.kendrick@example.com","registry-only"],["M/Y Swift Petrel",100,null,null,"Capt. Kai Bramble","dana.jarvis@example.com","registry-only"],["M/Y Swift Skua",null,null,null,null,null,"schedule"],["M/Y Western Beacon",null,null,null,null,null,"schedule"],["M/Y Western Current",85,null,null,"Capt. Logan Ellery","reese.bexley@example.com","registry-only"],["M/Y Western Star",null,null,null,null,null,"schedule"],["M/Y Western Strand",52,12,"Gulf Coast University","Rowan Thorne","alex.ashford@example.com","registry"],["M/Y Wild Anchor",null,null,null,null,null,"schedule"],["M/Y Wild Ketch",null,null,null,null,null,"schedule"],["M/Y Wild Meridian",72,null,null,"Capt. Taylor Dunmore","riley.lowell@example.com","registry-only"],["M/Y Wild Sextant",null,null,null,null,null,"schedule"],["M/Y Wild Skua",40,null,null,"Cell: 555-0192","marley.vance@example.com","registry-only"],["M/Y Wild Tern",145,null,null,"Bayline Charters","lee.abbott@example.com","registry"],["M/Y Wild Voyager",null,null,null,null,null,"schedule"],["M/Y Wild Wind",null,null,null,null,null,"schedule"],["OSV Amber Cove",null,null,null,null,null,"schedule"],["OSV Amber Reef",null,null,null,null,null,"schedule"],["OSV Blue Drift",null,null,null,null,null,"schedule"],["OSV Blue Harbor",40,null,null,"Harbor Institute",null,"registry-only"],["OSV Blue Osprey",null,null,null,null,null,"schedule"],["OSV Blue Sound",170,null,null,"Reese Hollis","noel.hollis@example.com","registry-only"],["OSV Bright Ledge",null,null,null,null,null,"schedule"],["OSV Clear Dory",null,null,null,null,null,"schedule"],["OSV Clear Lantern",null,null,null,null,null,"schedule"],["OSV Clear Marlin",null,null,null,null,null,"schedule"],["OSV Clear Reef",46,null,"Coastal Survey Partners","Cell: 555-0148","blake.danforth@example.com","registry-only"],["OSV Deep Harbor",null,null,null,null,null,"schedule"],["OSV Far Tide",null,null,null,null,null,"schedule"],["OSV Far Wind",null,null,null,null,null,"schedule"],["OSV Golden Ketch",null,null,null,null,null,"schedule"],["OSV Golden Osprey",null,null,null,null,null,"schedule"],["OSV Golden Tern",null,null,null,null,null,"schedule"],["OSV Green Cove",null,null,null,null,null,"schedule"],["OSV Green Current",null,null,null,null,null,"schedule"],["OSV Green Ketch",null,null,null,null,null,"schedule"],["OSV Grey Fathom",null,null,null,null,null,"schedule"],["OSV High Harbor",null,null,null,null,null,"schedule"],["OSV High Petrel",170,null,null,"Capt. Jesse Whitlock","harper.thorne@example.com","registry-only"],["OSV High Star",null,null,null,null,null,"schedule"],["OSV Iron Meridian",null,null,null,null,null,"schedule"],["OSV Long Harbor",null,null,null,null,null,"schedule"],["OSV Long Reef",120,null,null,"Capt. Logan Abbott",null,"registry-only"],["OSV Quiet Ketch",null,null,null,null,null,"schedule"],["OSV Salt Lantern",46,null,"State Marine Academy","Cell: 555-0131","cameron.underhill@example.com","registry-only"],["OSV Salt Marlin",null,null,null,null,null,"schedule"],["OSV Salt Osprey",null,null,null,null,null,"schedule"],["OSV Salt Voyager",null,null,null,null,null,"schedule"],["OSV Silver Gannet",null,null,null,null,null,"schedule"],["OSV Silver Harbor",46,null,null,"Capt. Skyler Norwood","elliot.garland@example.com","registry-only"],["OSV Silver Skua",24,null,"Seaway Education Trust","Capt. Emerson Quill",null,"registry"],["OSV Silver Tide",null,null,null,null,null,"schedule"],["OSV Western Reef",null,null,null,null,null,"schedule"],["OSV Western Skua",null,null,null,null,null,"schedule"],["OSV Western Tern",null,null,null,null,null,"schedule"],["OSV Wild Beacon",null,null,null,null,null,"schedule"],["OSV Wild Lantern",null,null,null,null,null,"schedule"],["OSV Wild Star",null,null,null,null,null,"schedule"],["R/V Amber Anchor",null,null,null,null,null,"schedule"],["R/V Amber Compass",null,null,null,null,null,"schedule"],["R/V Amber Drift",170,null,null,"Harbor Institute","emerson.pembroke@example.com","registry-only"],["R/V Amber Harbor",null,null,null,null,null,"schedule"],["R/V Amber Heron",null,null,null,null,null,"schedule"],["R/V Amber Ledge",72,null,null,null,"elliot.whitlock@example.com","registry"],["R/V Amber Marlin",145,null,"Tidewater Marine Services","Capt. Rowan Ashford","kendall.danforth@example.com","registry-only"],["R/V Amber Osprey",null,null,null,null,null,"schedule"],["R/V Amber Tide",null,null,null,null,null,"schedule"],["R/V Amber Voyager",24,null,null,null,null,"registry-only"],["R/V Amber Wind",32,null,"Regional Fisheries Agency","Cell: 555-0180","finley.quill@example.com","registry-only"],["R/V Blue Anchor",null,null,null,null,null,"schedule"],["R/V Blue Cove",null,null,null,null,null,"schedule"],["R/V Blue Drift",120,null,"State Marine Academy","Capt. Skyler Everly",null,"registry-only"],["R/V Blue Heron",null,null,null,null,null,"schedule"],["R/V Blue Kestrel",null,null,null,null,null,"schedule"],["R/V Blue Ketch",null,null,null,null,null,"schedule"],["R/V Blue Ledge",null,null,null,null,null,"schedule"],["R/V Blue Marlin",null,null,null,null,null,"schedule"],["R/V Blue Meridian",null,null,null,null,null,"schedule"],["R/V Blue Reef",null,null,null,null,null,"schedule"],["R/V Blue Star",null,null,null,null,null,"schedule"],["R/V Blue Voyager",null,null,null,null,null,"schedule"],["R/V Bright Current",null,null,null,null,null,"schedule"],["R/V Bright Dory",52,null,null,"Harbor Institute",null,"registry"],["R/V Bright Fathom",46,null,"Regional Fisheries Agency","Cell: 555-0179","hayden.danforth@example.com","registry-only"],["R/V Bright Harbor",null,null,null,null,null,"schedule"],["R/V Bright Kestrel",null,null,null,null,null,"schedule"],["R/V Bright Meridian",120,null,"Seaway Education Trust","Capt. Skyler Dunmore","lee.marsh@example.com","registry-only"],["R/V Bright Strand",null,null,null,null,null,"schedule"],["R/V Bright Tide",null,null,null,null,null,"schedule"],["R/V Clear Drift",null,null,null,null,null,"schedule"],["R/V Clear Fathom",null,null,null,null,null,"schedule"],["R/V Clear Sextant",null,null,null,null,null,"schedule"],["R/V Clear Star",null,null,null,null,null,"schedule"],["R/V Clear Strand",145,null,null,"Capt. Hayden Yardley","lee.oakes@example.com","registry-only"],["R/V Clear Tern",120,null,null,"Cell: 555-0181","avery.marsh@example.com","registry"],["R/V Coral Anchor",120,null,null,"Capt. Alex Thorne","noel.fenwick@example.com","registry-only"],["R/V Coral Current",null,null,null,null,null,"schedule"],["R/V Coral Gannet",null,null,null,null,null,"schedule"],["R/V Coral Harbor",null,null,null,null,null,"schedule"],["R/V Coral Meridian",24,null,"State Marine Academy","Cell: 555-0191","taylor.bexley@example.com","registry-only"],["R/V Coral Sound",null,null,null,null,null,"schedule"],["R/V Coral Strand",null,null,null,null,null,"schedule"],["R/V Coral Tern",null,null,null,null,null,"schedule"],["R/V Coral Voyager",46,null,"Open Water Sailing School","Logan Ellery",null,"registry-only"],["R/V Deep Heron",46,null,null,"Casey Hollis",null,"registry-only"],["R/V Deep Ketch",32,null,"Gulf Coast University",null,null,"registry-only"],["R/V Deep Osprey",null,null,null,null,null,"schedule"],["R/V Deep Star",null,null,null,null,null,"schedule"],["R/V Deep Strand",65,null,null,"Cell: 555-0125",null,"registry-only"],["R/V Deep Voyager",120,null,null,"Quinn Sterling","logan.calloway@example.com","registry-only"],["R/V Far Marlin",null,null,null,null,null,"schedule"],["R/V Far Sextant",null,null,null,null,null,"schedule"],["R/V Far Star",null,null,null,null,null,"schedule"],["R/V Golden Compass",null,null,null,null,null,"schedule"],["R/V Golden Horizon",null,null,null,null,null,"schedule"],["R/V Golden Lantern",null,null,null,null,null,"schedule"],["R/V Golden Marlin",null,null,null,null,null,"schedule"],["R/V Golden Meridian",null,null,null,null,null,"schedule"],["R/V Golden Voyager",null,null,null,null,null,"schedule"],["R/V Green Drift",null,null,null,null,null,"schedule"],["R/V Green Harbor",null,null,null,null,null,"schedule"],["R/V Green Marlin",null,null,null,null,null,"schedule"],["R/V Green Meridian",32,null,null,"Taylor Danforth",null,"registry-only"],["R/V Green Sextant",null,null,null,null,null,"schedule"],["R/V Green Star",null,null,null,null,null,"schedule"],["R/V Green Strand",null,null,null,null,null,"schedule"],["R/V Green Voyager",null,null,null,null,null,"schedule"],["R/V Green Wind",null,null,null,null,null,"schedule"],["R/V Grey Beacon",null,null,null,null,null,"schedule"],["R/V Grey Current",65,null,null,"Cell: 555-0136",null,"registry-only"],["R/V Grey Lantern",null,null,null,null,null,"schedule"],["R/V Grey Ledge",null,null,null,null,null,"schedule"],["R/V Grey Marlin",null,null,null,null,null,"schedule"],["R/V Grey Reef",170,null,null,null,"logan.ellery@example.com","registry-only"],["R/V Grey Sextant",null,null,null,null,null,"schedule"],["R/V Grey Tide",65,null,"Lakeshore Research Group",null,"alex.thorne@example.com","registry-only"],["R/V Grey Wind",null,null,null,null,null,"schedule"],["R/V High Compass",null,null,null,null,null,"schedule"],["R/V High Dory",100,null,null,"Cell: 555-0123",null,"registry-only"],["R/V High Drift",120,null,"Coastal Survey Partners","Parker Underhill","rowan.oakes@example.com","registry-only"],["R/V High Horizon",null,null,null,null,null,"schedule"],["R/V High Kestrel",null,null,null,null,null,"schedule"],["R/V High Reef",32,null,"Lakeshore Research Group","Capt. Elliot Fenwick","morgan.bramble@example.com","registry-only"],["R/V High Sound",32,4,null,null,"marley.garland@example.com","registry-only"],["R/V Iron Compass",null,null,null,null,null,"schedule"],["R/V Iron Cove",null,null,null,null,null,"schedule"],["R/V Iron Current",100,null,null,null,null,"registry-only"],["R/V Iron Dory",null,null,null,null,null,"schedule"],["R/V Iron Drift",null,null,null,null,null,"schedule"],["R/V Iron Harbor",null,null,null,null,null,"schedule"],["R/V Iron Ketch",46,null,null,"Capt. Casey Dunmore","harper.fairweather@example.com","registry"],["R/V Iron Lantern",null,null,null,null,null,"schedule"],["R/V Iron Osprey",null,null,null,null,null,"schedule"],["R/V Iron Reef",null,null,null,null,null,"schedule"],["R/V Iron Skua",72,null,null,"Harbor Institute","drew.ashford@example.com","registry-only"],["R/V Iron Strand",null,null,null,null,null,"schedule"],["R/V Iron Wind",46,null,null,"Cell: 555-0115","hayden.everly@example.com","registry-only"],["R/V Long Anchor",null,null,null,null,null,"schedule"],["R/V Long Compass",null,null,null,null,null,"schedule"],["R/V Long Current",65,null,null,"Capt. Cameron Vance","morgan.corwin@example.com","registry-only"],["R/V Long Fathom",null,null,null,null,null,"schedule"],["R/V Long Heron",85,null,null,"Cell: 555-0187","dana.sterling@example.com","registry-only"],["R/V Long Horizon",null,null,null,null,null,"schedule"],["R/V Long Ketch",null,null,null,null,null,"schedule"],["R/V Long Marlin",null,null,null,null,null,"schedule"],["R/V Long Star",null,null,null,null,null,"schedule"],["R/V Long Tide",null,null,null,null,null,"schedule"],["R/V Long Voyager",100,null,null,null,null,"registry-only"],["R/V Northern Horizon",null,null,null,null,null,"schedule"],["R/V Northern Lantern",null,null,null,null,null,"schedule"],["R/V Northern Ledge",null,null,null,null,null,"schedule"],["R/V Northern Meridian",null,null,null,null,null,"schedule"],["R/V Northern Osprey",null,null,null,null,null,"schedule"],["R/V Northern Reef",null,null,null,null,null,"schedule"],["R/V Northern Sextant",52,null,null,null,"harper.kendrick@example.com","registry-only"],["R/V Northern Skua",120,null,null,null,"jesse.quill@example.com","registry-only"],["R/V Northern Sound",46,null,"Coastal Survey Partners","Cell: 555-0191","blake.garland@example.com","registry-only"],["R/V Northern Star",null,null,null,null,null,"schedule"],["R/V Northern Strand",null,null,null,null,null,"schedule"],["R/V Northern Wind",null,null,null,null,null,"schedule"],["R/V Quiet Anchor",null,null,null,null,null,"schedule"],["R/V Quiet Dory",null,null,null,null,null,"schedule"],["R/V Quiet Fathom",null,null,null,null,null,"schedule"],["R/V Quiet Harbor",null,null,null,null,null,"schedule"],["R/V Quiet Heron",null,null,null,null,null,"schedule"],["R/V Quiet Kestrel",null,null,null,null,null,"schedule"],["R/V Quiet Marlin",null,null,null,null,null,"schedule"],["R/V Quiet Meridian",null,null,null,null,null,"schedule"],["R/V Quiet Osprey",null,null,null,null,null,"schedule"],["R/V Quiet Strand",null,null,null,null,null,"schedule"],["R/V Quiet Tern",null,null,null,null,null,"schedule"],["R/V Salt Current",null,null,null,null,null,"schedule"],["R/V Salt Drift",85,null,null,"Cell: 555-0102","marley.vance@example.com","registry"],["R/V Salt Heron",null,null,null,null,null,"schedule"],["R/V Salt Ledge",null,null,null,null,null,"schedule"],["R/V Salt Skua",52,null,"Lakeshore Research Group","Cell: 555-0133",null,"registry-only"],["R/V Silver Anchor",170,null,"State Marine Academy","Cell: 555-0190","parker.sterling@example.com","registry-only"],["R/V Silver Heron",null,null,null,null,null,"schedule"],["R/V Silver Osprey",null,null,null,null,null,"schedule"],["R/V Silver Petrel",null,null,null,null,null,"schedule"],["R/V Swift Current",null,null,null,null,null,"schedule"],["R/V Swift Gannet",null,null,null,null,null,"schedule"],["R/V Swift Heron",120,null,"State Marine Academy","Cell: 555-0178","lee.vance@example.com","registry-only"],["R/V Swift Ketch",null,null,null,null,null,"schedule"],["R/V Swift Lantern",null,null,null,null,null,"schedule"],["R/V Swift Osprey",null,null,null,null,null,"schedule"],["R/V Swift Reef",170,null,null,"Capt. Marley Whitlock",null,"registry-only"],["R/V Swift Sextant",null,null,null,null,null,"schedule"],["R/V Swift Sound",null,null,null,null,null,"schedule"],["R/V Swift Star",null,null,null,null,null,"schedule"],["R/V Western Drift",null,null,null,null,null,"schedule"],["R/V Western Fathom",32,null,null,"Capt. Cameron Quill",null,"registry-only"],["R/V Western Kestrel",null,null,null,null,null,"schedule"],["R/V Western Ledge",170,null,null,"Cell: 555-0152","morgan.jarvis@example.com","registry-only"],["R/V Western Sextant",null,null,null,null,null,"schedule"],["R/V Western Tide",null,null,null,null,null,"schedule"],["R/V Wild Current",null,null,null,null,null,"schedule"],["R/V Wild Dory",null,null,null,null,null,"schedule"],["R/V Wild Harbor",null,null,null,null,null,"schedule"],["R/V Wild Heron",145,null,null,"Capt. Cameron Ashford",null,"registry-only"],["R/V Wild Kestrel",null,null,null,null,null,"schedule"],["R/V Wild Ledge",120,null,null,"Drew Dunmore","quinn.ellery@example.com","registry"],["R/V Wild Marlin",32,null,"Seaway Education Trust","Cell: 555-0192",null,"registry-only"],["R/V Wild Sound",null,null,null,null,null,"schedule"],["R/V Wild Tide",null,null,null,null,null,"schedule"],["S/V Amber Fathom",null,null,null,null,null,"schedule"],["S/V Amber Gannet",null,null,null,null,null,"schedule"],["S/V Amber Star",32,null,null,"Cell: 555-0137","logan.vance@example.com","registry-only"],["S/V Amber Tide",46,null,null,"Capt. Jordan Fenwick","sage.garland@example.com","registry-only"],["S/V Blue Beacon",null,null,null,null,null,"schedule"],["S/V Bright Drift",32,null,null,"Capt. Sage Garland","kai.vance@example.com","registry-only"],["S/V Bright Sextant",null,null,null,null,null,"schedule"],["S/V Bright Wind",72,null,"Regional Fisheries Agency","Taylor Garland","kendall.quill@example.com","registry-only"],["S/V Clear Heron",85,null,null,"Capt. Taylor Calloway","cameron.thorne@example.com","registry-only"],["S/V Clear Horizon",85,null,null,"Bayline Charters","noel.kendrick@example.com","registry-only"],["S/V Clear Kestrel",null,null,null,null,null,"schedule"],["S/V Clear Sound",null,null,null,null,null,"schedule"],["S/V Coral Compass",null,null,null,null,null,"schedule"],["S/V Coral Cove",null,null,null,null,null,"schedule"],["S/V Coral Fathom",null,null,null,null,null,"schedule"],["S/V Deep Dory",null,null,null,null,null,"schedule"],["S/V Deep Skua",null,null,null,null,null,"schedule"],["S/V Deep Tide",null,null,null,null,null,"schedule"],["S/V Deep Wind",null,null,null,null,null,"schedule"],["S/V Far Current",null,null,null,null,null,"schedule"],["S/V Far Dory",null,null,null,null,null,"schedule"],["S/V Far Gannet",null,null,null,null,null,"schedule"],["S/V Far Horizon",null,null,null,null,null,"schedule"],["S/V Far Osprey",52,null,null,"Capt. Alex Lowell","finley.danforth@example.com","registry-only"],["S/V Far Tern",null,null,null,null,null,"schedule"],["S/V Golden Anchor",null,null,null,null,null,"schedule"],["S/V Golden Beacon",null,null,null,null,null,"schedule"],["S/V Golden Cove",null,null,null,null,null,"schedule"],["S/V Golden Dory",null,null,null,null,null,"schedule"],["S/V Golden Fathom",null,null,null,null,null,"schedule"],["S/V Golden Heron",null,null,null,null,null,"schedule"],["S/V Golden Reef",null,null,null,null,null,"schedule"],["S/V Golden Star",40,null,null,"Capt. Parker Danforth","finley.fairweather@example.com","registry-only"],["S/V Golden Tide",40,null,null,"Cell: 555-0190",null,"registry-only"],["S/V Green Compass",null,null,null,null,null,"schedule"],["S/V Green Osprey",null,null,null,null,null,"schedule"],["S/V Green Petrel",null,null,null,null,null,"schedule"],["S/V Green Skua",null,null,null,null,null,"schedule"],["S/V Grey Drift",null,null,null,null,null,"schedule"],["S/V Grey Reef",null,null,null,null,null,"schedule"],["S/V Grey Skua",null,null,null,null,null,"schedule"],["S/V High Heron",null,null,null,null,null,"schedule"],["S/V High Ketch",null,null,null,null,null,"schedule"],["S/V High Marlin",null,null,null,null,null,"schedule"],["S/V High Meridian",null,null,null,null,null,"schedule"],["S/V High Tide",24,null,null,"Estuary Foundation","blake.thorne@example.com","registry-only"],["S/V Iron Marlin",null,null,null,null,null,"schedule"],["S/V Iron Petrel",null,null,null,null,null,"schedule"],["S/V Long Gannet",null,null,null,null,null,"schedule"],["S/V Long Lantern",null,null,null,null,null,"schedule"],["S/V Long Sextant",null,null,null,null,null,"schedule"],["S/V Northern Fathom",null,null,null,null,null,"schedule"],["S/V Northern Harbor",52,null,null,"Capt. Dana Norwood","skyler.hollis@example.com","registry-only"],["S/V Northern Meridian",85,null,null,"Capt. Emerson Pembroke","hayden.thorne@example.com","registry-only"],["S/V Quiet Beacon",null,null,null,null,null,"schedule"],["S/V Quiet Drift",null,null,null,null,null,"schedule"],["S/V Quiet Fathom",40,null,null,"Capt. Elliot Fairweather","harper.vance@example.com","registry-only"],["S/V Quiet Gannet",null,null,null,null,null,"schedule"],["S/V Quiet Sound",24,null,null,"Cell: 555-0139","jordan.fairweather@example.com","registry-only"],["S/V Quiet Tide",52,null,"Coastal Survey Partners","Capt. Sage Oakes","jordan.pembroke@example.com","registry-only"],["S/V Salt Anchor",null,null,null,null,null,"schedule"],["S/V Salt Beacon",null,null,null,null,null,"schedule"],["S/V Salt Kestrel",null,null,null,null,null,"schedule"],["S/V Silver Cove",null,null,null,null,null,"schedule"],["S/V Silver Current",null,null,null,null,null,"schedule"],["S/V Silver Harbor",null,null,null,null,null,"schedule"],["S/V Silver Star",null,null,null,null,null,"schedule"],["S/V Silver Wind",null,null,null,null,null,"schedule"],["S/V Swift Beacon",null,null,null,null,null,"schedule"],["S/V Swift Marlin",null,null,null,null,null,"schedule"],["S/V Swift Reef",null,null,null,null,null,"schedule"],["S/V Swift Tide",null,null,null,null,null,"schedule"],["S/V Swift Wind",null,null,null,null,null,"schedule"],["S/V Western Compass",null,null,null,null,null,"schedule"],["S/V Western Cove",24,null,null,"Capt. Riley Lowell","harper.jarvis@example.com","registry-only"],["S/V Western Wind",null,null,null,null,null,"schedule"],["S/V Wild Cove",120,null,null,"Capt. Parker Fenwick","reese.fairweather@example.com","registry-only"],["S/V Wild Drift",24,null,"Coastal Survey Partners","Jordan Pembroke","jordan.marsh@example.com","registry-only"],["S/V Wild Harbor",65,null,null,null,null,"registry-only"],["S/V Wild Horizon",null,null,null,null,null,"schedule"],["S/V Wild Reef",100,null,null,"Cell: 555-0124",null,"registry-only"],["S/Y Clear Beacon",170,null,null,"Capt. Jesse Ashford","kendall.norwood@example.com","registry"],["S/Y Clear Sextant",145,null,null,"Capt. Taylor Thorne","alex.abbott@example.com","registry-only"],["S/Y Deep Cove",145,null,"State Marine Academy","Capt. Drew Quill","jesse.yardley@example.com","registry-only"],["S/Y Far Harbor",null,null,null,null,null,"schedule"],["S/Y High Fathom",null,null,null,null,null,"schedule"],["S/Y High Gannet",100,null,null,"Capt. Jamie Everly","elliot.dunmore@example.com","registry"],["S/Y Long Gannet",24,null,null,"Bayline Charters","blake.whitlock@example.com","registry-only"],["S/Y Silver Meridian",null,null,null,null,null,"schedule"],["S/Y Wild Petrel",null,null,null,null,null,"schedule"],["Tug Amber Horizon",null,null,null,null,null,"schedule"],["Tug Amber Kestrel",null,null,null,null,null,"schedule"],["Tug Amber Lantern",null,null,null,null,null,"schedule"],["Tug Amber Sextant",null,null,null,null,null,"schedule"],["Tug Amber Strand",null,null,null,null,null,"schedule"],["Tug Blue Fathom",null,null,null,null,null,"schedule"],["Tug Bright Anchor",null,null,null,null,null,"schedule"],["Tug Bright Petrel",null,null,null,null,null,"schedule"],["Tug Coral Heron",null,null,null,null,null,"schedule"],["Tug Coral Reef",null,null,null,null,null,"schedule"],["Tug Deep Current",null,null,null,null,null,"schedule"],["Tug Deep Fathom",null,null,null,null,null,"schedule"],["Tug Deep Wind",120,null,null,"Harbor Institute","rowan.underhill@example.com","registry-only"],["Tug Far Compass",null,null,null,null,null,"schedule"],["Tug Far Ketch",null,null,null,null,null,"schedule"],["Tug Far Ledge",null,null,null,null,null,"schedule"],["Tug Far Meridian",null,null,null,null,null,"schedule"],["Tug Far Reef",null,null,null,null,null,"schedule"],["Tug Far Strand",null,null,null,null,null,"schedule"],["Tug Golden Sound",null,null,null,null,null,"schedule"],["Tug Green Fathom",null,null,null,null,null,"schedule"],["Tug Green Sound",null,null,null,null,null,"schedule"],["Tug Grey Ketch",null,null,null,null,null,"schedule"],["Tug Grey Voyager",null,null,null,null,null,"schedule"],["Tug Iron Anchor",null,null,null,null,null,"schedule"],["Tug Long Anchor",170,null,null,"Capt. Lee Fairweather","jamie.quill@example.com","registry-only"],["Tug Long Kestrel",null,null,null,null,null,"schedule"],["Tug Long Osprey",null,null,null,null,null,"schedule"],["Tug Long Reef",null,null,null,null,null,"schedule"],["Tug Long Skua",170,null,null,"Capt. Blake Fenwick",null,"registry-only"],["Tug Northern Beacon",null,null,null,null,null,"schedule"],["Tug Salt Star",null,null,null,null,null,"schedule"],["Tug Salt Strand",85,null,null,"Capt. Dana Ransom","finley.vance@example.com","registry-only"],["Tug Salt Tide",null,null,null,null,null,"schedule"],["Tug Silver Fathom",null,null,null,null,null,"schedule"],["Tug Silver Tern",null,null,null,null,null,"schedule"],["Tug Swift Anchor",null,null,null,null,null,"schedule"],["Tug Swift Ledge",null,null,null,null,null,"schedule"],["Tug Western Current",null,null,null,null,null,"schedule"],["Tug Western Heron",null,null,null,null,null,"schedule"],["Tug Western Lantern",null,null,null,null,null,"schedule"],["Tug Wild Gannet",null,null,null,null,null,"schedule"],["Tug Wild Strand",null,null,null,null,null,"schedule"]],"res":[[3,-1,"inc",4855,5,"Holiday",0],[3,-1,"inc",5983,0,"Load equipment",0],[2,-1,"inc",5330,0,"Road race - access limited",0],[1,-1,"inc",5008,8,"Science stroll",0],[0,9,"inc",5338,0,"",0],[0,15,"inc",6860,0,"",0],[0,15,"inc",6873,0,"",0],[0,50,"inc",6783,0,"",0],[0,97,"inc",6858,0,"",0],[0,97,"inc",6866,0,"",0],[0,125,"inc",1775,0,"",0],[0,137,"inc",2758,2,"",0],[0,141,"inc",5728,20,"",0],[0,157,"inc",5210,0,"",0],[0,163,"inc",5359,0,"",0],[0,171,"inc",3321,2,"",0],[0,171,"inc",3358,3,"",0],[0,171,"inc",3544,0,"",0],[0,171,"inc",3579,11,"",0],[0,182,"inc",6272,0,"",0],[0,192,"inc",1689,1,"",0],[0,192,"inc",2926,2,"",0],[0,192,"inc",3061,3,"",0],[0,192,"inc",3093,1,"",0],[0,192,"inc",3184,2,"",0],[0,192,"inc",3294,23,"",0],[0,240,"inc",6871,0,"",0],[0,244,"inc",3404,2,"",0],[0,287,"inc",4912,0,"",0],[0,294,"inc",6882,0,"",0],[0,296,"inc",6459,18,"",0],[0,386,"inc",4506,0,"",0],[0,386,"inc",4536,0,"",0],[0,386,"inc",4566,0,"",0],[0,386,"inc",4599,0,"",0],[0,386,"inc",4630,0,"",0],[0,386,"inc",4657,0,"",0],[0,386,"inc",4691,0,"",0],[0,386,"inc",4719,0,"",0],[0,386,"inc",4869,0,"",0],[0,386,"inc",4899,0,"",0],[0,386,"inc",4930,0,"",0],[0,386,"inc",4960,0,"",0],[0,386,"inc",4995,0,"",0],[0,392,"inc",4970,0,"",0],[0,400,"inc",1834,5,"",0],[0,408,"inc",6850,0,"",0],[0,408,"inc",6852,0,"",0],[0,430,"inc",5845,0,"",0],[0,434,"inc",7813,3,"",0],[0,435,"inc",5034,2,"",0],[0,436,"inc",1691,2,"",0],[0,441,"inc",5288,2,"",0],[0,463,"inc",6851,0,"",0],[0,486,"inc",2756,1,"",0],[0,544,"inc",4863,0,"",0],[0,591,"inc",5017,0,"",0],[0,591,"inc",5025,1,"",0],[0,595,"inc",5358,0,"",0],[0,601,"inc",2328,1,"",0],[0,622,"inc",6859,0,"",0],[0,625,"inc",1430,30,"",0],[3,-1,"nfp",7487,0,"Arrives AM",0],[3,-1,"nfp",7554,0,"Bunker barge",0],[1,-1,"nfp",7558,0,"Donor reception",0],[3,-1,"nfp",7780,0,"Fuel truck",0],[3,-1,"nfp",7111,0,"Fueling",0],[3,-1,"nfp",7462,0,"Fueling @0800",0],[3,-1,"nfp",7607,0,"Fueling @0800",0],[3,-1,"nfp",7819,0,"Fueling @0800",0],[3,-1,"nfp",7587,4,"Holiday",0],[3,-1,"nfp",7586,0,"Load equipment",0],[3,-1,"nfp",6678,0,"Provisioning",0],[1,-1,"nfp",7482,0,"Student tour",0],[3,-1,"nfp",6799,0,"Touch and go",0],[3,-1,"nfp",7581,0,"Water/slops pumping",0],[3,-1,"nfp",7573,0,"Wire spooling",0],[0,5,"nfp",7594,5,"",0],[0,12,"nfp",7152,41,"",0],[0,16,"nfp",6467,11,"",0],[0,16,"nfp",6482,13,"",0],[0,85,"nfp",7050,5,"",0],[0,111,"nfp",6391,6,"",0],[0,151,"nfp",7066,0,"",0],[0,200,"nfp",7104,0,"",0],[0,351,"nfp",6279,10,"",0],[0,402,"nfp",7246,0,"",0],[0,435,"nfp",6363,0,"",0],[0,435,"nfp",6387,0,"",0],[0,440,"nfp",7146,0,"",0],[0,455,"nfp",6378,0,"",0],[0,487,"nfp",6520,3,"",0],[0,522,"nfp",7107,0,"",0],[0,540,"nfp",7129,6,"",0],[0,610,"nfp",7082,6,"",0],[2,-1,"npe",4662,6,"Bollard replacement, west face",0],[1,-1,"npe",5338,0,"Community sail day",0],[3,-1,"npe",1615,0,"Delayed due to weather",0],[3,-1,"npe",4861,0,"Delayed due to weather",0],[3,-1,"npe",5041,3,"Delayed due to weather",0],[3,-1,"npe",4977,5,"Departure 0800",0],[3,-1,"npe",5981,4,"Departure 0800",0],[2,-1,"npe",4687,19,"Dock inspection",0],[2,-1,"npe",3943,2,"Dock maintenance - restricted access",0],[2,-1,"npe",5025,1,"Dock maintenance - restricted access",0],[3,-1,"npe",5373,2,"ETA 1200",0],[3,-1,"npe",1614,0,"Emergency port call",0],[2,-1,"npe",3934,4,"Pier repair - no docking",0],[1,-1,"npe",5307,0,"Public open house",0],[2,-1,"npe",5016,0,"Ultrasonic pier test",0],[0,2,"npe",5147,0,"",0],[0,3,"npe",3828,2,"",0],[0,8,"npe",7166,5,"",0],[0,22,"npe",5632,0,"",0],[0,29,"npe",258,4,"",0],[0,29,"npe",272,0,"",0],[0,29,"npe",274,10,"",0],[0,29,"npe",291,3,"",0],[0,29,"npe",300,3,"",0],[0,29,"npe",305,6,"",0],[0,29,"npe",330,3,"",0],[0,29,"npe",338,26,"",0],[0,29,"npe",455,5,"",0],[0,29,"npe",471,4,"",0],[0,29,"npe",480,4,"",0],[0,29,"npe",489,0,"",0],[0,29,"npe",497,5,"",0],[0,29,"npe",517,4,"",0],[0,29,"npe",531,5,"",0],[0,29,"npe",541,3,"",0],[0,29,"npe",546,29,"",0],[0,29,"npe",604,6,"",0],[0,29,"npe",626,2,"",0],[0,29,"npe",641,6,"",0],[0,29,"npe",649,4,"",0],[0,29,"npe",660,5,"",0],[0,29,"npe",678,4,"",0],[0,29,"npe",701,59,"",0],[0,29,"npe",764,2,"",0],[0,29,"npe",808,11,"",0],[0,29,"npe",837,6,"",0],[0,29,"npe",972,0,"",0],[0,29,"npe",975,27,"",0],[0,29,"npe",1004,5,"",0],[0,29,"npe",1019,13,"",0],[0,29,"npe",1034,4,"",0],[0,29,"npe",1195,5,"",0],[0,29,"npe",1205,5,"",0],[0,29,"npe",1218,5,"",0],[0,29,"npe",1226,0,"",0],[0,29,"npe",1236,5,"",0],[0,29,"npe",1249,5,"",0],[0,29,"npe",1258,17,"",0],[0,29,"npe",1281,13,"",0],[0,29,"npe",1624,5,"",0],[0,29,"npe",1642,5,"",0],[0,29,"npe",1699,4,"",0],[0,29,"npe",1708,8,"",0],[0,29,"npe",1720,3,"",0],[0,29,"npe",1740,4,"",0],[0,29,"npe",1754,6,"",0],[0,29,"npe",1765,142,"",0],[0,29,"npe",1935,7,"",0],[0,29,"npe",1946,0,"",0],[0,29,"npe",1955,3,"",0],[0,29,"npe",1962,3,"",0],[0,29,"npe",1975,16,"",0],[0,29,"npe",1997,2,"",0],[0,29,"npe",2003,3,"",0],[0,29,"npe",2011,3,"",0],[0,29,"npe",2024,8,"",0],[0,29,"npe",2041,5,"",0],[0,29,"npe",2094,4,"",0],[0,29,"npe",2102,1,"",0],[0,29,"npe",2133,116,"",0],[0,29,"npe",2253,0,"",0],[0,29,"npe",2294,5,"",0],[0,29,"npe",2379,13,"",0],[0,29,"npe",2405,4,"",0],[0,29,"npe",2435,6,"",0],[0,29,"npe",2450,0,"",0],[0,29,"npe",2465,0,"",0],[0,29,"npe",2484,4,"",0],[0,29,"npe",2498,4,"",0],[0,29,"npe",2506,49,"",0],[0,33,"npe",3056,2,"",0],[0,33,"npe",3068,4,"",0],[0,33,"npe",3085,0,"",0],[0,33,"npe",3572,0,"",0],[0,33,"npe",3734,0,"",0],[0,33,"npe",3851,0,"",0],[0,33,"npe",3975,1,"",0],[0,33,"npe",4102,0,"",0],[0,33,"npe",4468,0,"",0],[0,33,"npe",4770,0,"",0],[0,33,"npe",4775,0,"",0],[0,33,"npe",4805,0,"",0],[0,33,"npe",4832,0,"",0],[0,33,"npe",6016,1,"",0],[0,33,"npe",6019,1,"",0],[0,33,"npe",6286,0,"",0],[0,33,"npe",6646,0,"",0],[0,33,"npe",7021,0,"",0],[0,33,"npe",7751,0,"",0],[0,33,"npe",8120,0,"",0],[0,34,"npe",5687,0,"",0],[0,36,"npe",6301,10,"",0],[0,48,"npe",6650,0,"",0],[0,48,"npe",7151,0,"",0],[0,55,"npe",7838,3,"",0],[0,55,"npe",7847,2,"",0],[0,55,"npe",8201,3,"",0],[0,57,"npe",214,1,"",0],[0,59,"npe",6883,1,"",0],[0,66,"npe",7241,2,"",0],[0,66,"npe",7246,1,"",0],[0,69,"npe",6752,0,"",0],[0,69,"npe",6754,0,"",0],[0,69,"npe",6788,0,"",0],[0,73,"npe",2743,1,"",0],[0,74,"npe",1308,3,"",0],[0,76,"npe",3103,0,"",0],[0,78,"npe",613,1,"",0],[0,79,"npe",2643,2,"",0],[0,79,"npe",2651,1,"",0],[0,81,"npe",2370,0,"",0],[0,82,"npe",2358,2,"",0],[0,84,"npe",1313,0,"",0],[0,84,"npe",1318,0,"",0],[0,84,"npe",1332,0,"",0],[0,84,"npe",1336,0,"",0],[0,84,"npe",1341,0,"",0],[0,84,"npe",1343,0,"",0],[0,84,"npe",1348,0,"",0],[0,84,"npe",1350,0,"",0],[0,84,"npe",1375,7,"",0],[0,84,"npe",1400,6,"",0],[0,84,"npe",5040,0,"",0],[0,84,"npe",5273,0,"",0],[0,84,"npe",5280,0,"",0],[0,84,"npe",5301,0,"",0],[0,84,"npe",5313,0,"",0],[0,84,"npe",5329,0,"",0],[0,84,"npe",5333,0,"",0],[0,84,"npe",5370,1,"",0],[0,84,"npe",5991,3,"",0],[0,84,"npe",6343,0,"",0],[0,84,"npe",6346,1,"",0],[0,84,"npe",6355,1,"",0],[0,84,"npe",6885,1,"",0],[0,84,"npe",7128,4,"",0],[0,84,"npe",7537,5,"",0],[0,84,"npe",7630,2,"",0],[0,84,"npe",7643,2,"",0],[0,84,"npe",7747,1,"",0],[0,84,"npe",8116,1,"",0],[0,86,"npe",7765,1,"",0],[0,86,"npe",8136,1,"",0],[0,87,"npe",5271,0,"",0],[0,87,"npe",5274,0,"",0],[0,87,"npe",5283,2,"",0],[0,88,"npe",7011,2,"",0],[0,88,"npe",7016,1,"",0],[0,93,"npe",7211,0,"",0],[0,95,"npe",2816,1,"",0],[0,95,"npe",2821,1,"",0],[0,96,"npe",5980,0,"",0],[0,96,"npe",6979,8,"",0],[0,103,"npe",1688,1,"",0],[0,107,"npe",6706,1,"",0],[0,114,"npe",5323,0,"",0],[0,114,"npe",5349,0,"",0],[0,115,"npe",5736,3,"",0],[0,115,"npe",5764,1,"",0],[0,115,"npe",5777,3,"",0],[0,116,"npe",5290,2,"",0],[0,119,"npe",7353,1,"",0],[0,122,"npe",6811,1,"",0],[0,126,"npe",3652,30,"",0],[0,126,"npe",3685,19,"",0],[0,126,"npe",3890,7,"",0],[0,126,"npe",3908,16,"",0],[0,126,"npe",6835,8,"",0],[0,126,"npe",6860,6,"",0],[0,128,"npe",5420,0,"",0],[0,132,"npe",3143,2,"",0],[0,134,"npe",3449,6,"",0],[0,134,"npe",3870,4,"",0],[0,134,"npe",4231,3,"",0],[0,147,"npe",6974,2,"",0],[0,152,"npe",4951,2,"",0],[0,152,"npe",4955,3,"",0],[0,152,"npe",4960,2,"",0],[0,153,"npe",964,0,"",0],[0,154,"npe",2861,0,"",0],[0,158,"npe",4527,0,"",0],[0,158,"npe",4531,0,"",0],[0,158,"npe",4609,1,"",0],[0,158,"npe",4612,0,"",0],[0,158,"npe",4669,0,"",0],[0,158,"npe",4858,0,"",0],[0,158,"npe",4860,0,"",0],[0,158,"npe",4862,0,"",0],[0,158,"npe",4877,5,"",0],[0,158,"npe",4901,11,"",0],[0,158,"npe",5145,1,"",0],[0,158,"npe",5170,0,"",0],[0,158,"npe",5282,0,"",0],[0,158,"npe",5303,0,"",0],[0,158,"npe",5305,0,"",0],[0,158,"npe",5324,0,"",0],[0,158,"npe",5381,1,"",0],[0,158,"npe",5419,0,"",0],[0,158,"npe",5421,1,"",0],[0,158,"npe",5532,1,"",0],[0,158,"npe",5881,2,"",0],[0,158,"npe",5888,1,"",0],[0,160,"npe",1724,6,"",0],[0,168,"npe",1364,3,"",0],[0,175,"npe",7477,8,"",0],[0,175,"npe",7489,2,"",0],[0,182,"npe",2631,7,"",0],[0,182,"npe",3760,9,"",0],[0,182,"npe",3773,0,"",0],[0,182,"npe",3775,2,"",0],[0,182,"npe",3785,17,"",0],[0,182,"npe",3806,5,"",0],[0,182,"npe",3859,3,"",0],[0,182,"npe",3864,4,"",0],[0,182,"npe",3925,7,"",0],[0,182,"npe",3939,1,"",0],[0,182,"npe",3946,2,"",0],[0,182,"npe",3952,0,"",0],[0,182,"npe",3960,5,"",0],[0,182,"npe",3988,4,"",0],[0,182,"npe",5558,8,"",0],[0,182,"npe",6067,74,"",0],[0,182,"npe",6173,82,"",0],[0,182,"npe",6260,11,"",0],[0,182,"npe",6278,6,"",0],[0,182,"npe",6380,9,"",0],[0,182,"npe",6392,4,"",0],[0,182,"npe",7785,2,"",0],[0,182,"npe",7790,30,"",0],[0,182,"npe",7826,5,"",0],[0,184,"npe",4595,0,"",0],[0,188,"npe",5613,4,"",0],[0,192,"npe",1909,1,"",0],[0,192,"npe",1949,3,"",0],[0,192,"npe",2088,5,"",0],[0,192,"npe",6774,0,"",0],[0,196,"npe",3132,1,"",0],[0,196,"npe",3153,3,"",0],[0,215,"npe",6993,3,"",0],[0,215,"npe",6999,7,"",0],[0,222,"npe",5376,4,"",0],[0,225,"npe",4984,6,"",0],[0,225,"npe",4998,2,"",0],[0,225,"npe",6142,21,"",0],[0,226,"npe",5255,5,"",0],[0,244,"npe",2305,1,"",0],[0,244,"npe",2312,0,"",0],[0,244,"npe",2314,0,"",0],[0,244,"npe",2336,0,"",0],[0,244,"npe",2338,0,"",0],[0,244,"npe",2703,0,"",0],[0,244,"npe",2705,2,"",0],[0,244,"npe",2925,0,"",0],[0,244,"npe",2927,0,"",0],[0,244,"npe",3098,1,"",0],[0,244,"npe",3101,1,"",0],[0,244,"npe",3150,0,"",0],[0,244,"npe",3223,1,"",0],[0,244,"npe",3226,0,"",0],[0,244,"npe",3294,3,"",0],[0,244,"npe",3320,0,"",0],[0,244,"npe",3551,1,"",0],[0,244,"npe",3558,1,"",0],[0,244,"npe",3566,0,"",0],[0,244,"npe",3575,0,"",0],[0,244,"npe",3578,5,"",0],[0,244,"npe",3817,1,"",0],[0,244,"npe",3826,1,"",0],[0,244,"npe",4142,0,"",0],[0,250,"npe",6784,0,"",0],[0,250,"npe",6787,0,"",0],[0,265,"npe",5272,0,"",0],[0,265,"npe",5302,0,"",0],[0,265,"npe",5314,0,"",0],[0,265,"npe",5330,0,"",0],[0,275,"npe",5336,0,"",0],[0,289,"npe",2796,2,"",0],[0,289,"npe",4536,1,"",0],[0,289,"npe",4670,1,"",0],[0,289,"npe",7579,2,"",0],[0,299,"npe",1731,0,"",0],[0,300,"npe",7682,12,"",0],[0,300,"npe",8051,0,"",0],[0,302,"npe",6665,2,"",0],[0,302,"npe",6686,1,"",0],[0,302,"npe",6747,1,"",0],[0,302,"npe",6797,2,"",0],[0,312,"npe",1522,21,"",0],[0,313,"npe",2255,8,"",0],[0,315,"npe",7708,0,"",0],[0,315,"npe",8077,0,"",0],[0,320,"npe",7576,0,"",0],[0,322,"npe",7505,0,"",0],[0,324,"npe",3037,4,"",0],[0,324,"npe",3407,4,"",0],[0,324,"npe",3428,2,"",0],[0,326,"npe",578,2,"",0],[0,326,"npe",601,1,"",0],[0,329,"npe",4118,2,"",0],[0,329,"npe",4123,4,"",0],[0,329,"npe",4132,2,"",0],[0,329,"npe",4138,3,"",0],[0,329,"npe",6315,2,"",0],[0,329,"npe",6323,4,"",0],[0,329,"npe",6417,3,"",0],[0,329,"npe",6422,3,"",0],[0,329,"npe",6438,2,"",0],[0,330,"npe",7880,0,"",0],[0,331,"npe",5383,0,"",0],[0,335,"npe",537,2,"",0],[0,337,"npe",2315,1,"",0],[0,341,"npe",7184,0,"",0],[0,341,"npe",7192,0,"",0],[0,341,"npe",7216,1,"",0],[0,342,"npe",7034,1,"",0],[0,346,"npe",3772,0,"",0],[0,346,"npe",3779,5,"",0],[0,353,"npe",6725,1,"",0],[0,353,"npe",6775,2,"",0],[0,353,"npe",6780,2,"",0],[0,353,"npe",6789,2,"",0],[0,353,"npe",7138,4,"",0],[0,356,"npe",3593,23,"",0],[0,356,"npe",3621,30,"",0],[0,363,"npe",598,2,"",0],[0,363,"npe",618,6,"",0],[0,363,"npe",1166,8,"",0],[0,363,"npe",2544,8,"",0],[0,363,"npe",2556,30,"",0],[0,363,"npe",2590,21,"",0],[0,363,"npe",2665,6,"",0],[0,363,"npe",2762,4,"",0],[0,363,"npe",2769,14,"",0],[0,364,"npe",248,0,"",0],[0,370,"npe",6404,0,"",0],[0,372,"npe",5279,0,"",0],[0,373,"npe",5635,14,"",0],[0,373,"npe",5691,5,"",0],[0,374,"npe",6360,2,"",0],[0,385,"npe",4146,3,"",0],[0,385,"npe",4152,2,"",0],[0,385,"npe",4161,2,"",0],[0,385,"npe",4168,9,"",0],[0,385,"npe",4181,4,"",0],[0,385,"npe",4567,4,"",0],[0,385,"npe",4580,14,"",0],[0,385,"npe",4618,1,"",0],[0,385,"npe",4849,1,"",0],[0,385,"npe",5998,4,"",0],[0,385,"npe",6009,4,"",0],[0,385,"npe",6026,4,"",0],[0,385,"npe",6036,22,"",0],[0,385,"npe",6366,2,"",0],[0,385,"npe",6373,6,"",0],[0,385,"npe",7054,5,"",0],[0,385,"npe",7423,1,"",0],[0,385,"npe",7429,6,"",0],[0,385,"npe",7460,6,"",0],[0,385,"npe",7528,5,"",0],[0,385,"npe",7916,10,"",0],[0,385,"npe",7931,6,"",0],[0,385,"npe",8369,30,"",0],[0,387,"npe",5819,3,"",0],[0,393,"npe",6064,2,"",0],[0,395,"npe",1654,4,"",0],[0,396,"npe",7121,6,"",0],[0,396,"npe",7163,1,"",0],[0,396,"npe",7178,3,"",0],[0,420,"npe",1322,0,"",0],[0,421,"npe",588,2,"",0],[0,421,"npe",931,1,"",0],[0,421,"npe",949,1,"",0],[0,421,"npe",955,0,"",0],[0,421,"npe",1605,0,"",0],[0,421,"npe",1618,0,"",0],[0,421,"npe",1620,0,"",0],[0,421,"npe",1630,0,"",0],[0,427,"npe",1328,0,"",0],[0,429,"npe",1151,1,"",0],[0,429,"npe",1180,1,"",0],[0,429,"npe",1469,0,"",0],[0,429,"npe",1475,0,"",0],[0,429,"npe",1544,1,"",0],[0,429,"npe",1547,0,"",0],[0,429,"npe",1592,0,"",0],[0,429,"npe",1612,0,"",0],[0,429,"npe",1669,0,"",0],[0,429,"npe",1671,1,"",0],[0,429,"npe",1678,1,"",0],[0,429,"npe",1717,0,"",0],[0,429,"npe",1917,1,"",0],[0,429,"npe",2076,0,"",0],[0,429,"npe",2081,1,"",0],[0,429,"npe",2125,0,"",0],[0,429,"npe",2129,0,"",0],[0,435,"npe",6481,0,"",0],[0,449,"npe",7703,2,"",0],[0,449,"npe",7730,1,"",0],[0,449,"npe",8072,2,"",0],[0,449,"npe",8099,1,"",0],[0,451,"npe",6730,0,"",0],[0,456,"npe",4965,2,"",0],[0,457,"npe",2715,1,"",0],[0,457,"npe",2725,1,"",0],[0,458,"npe",2362,0,"",0],[0,460,"npe",7954,7,"",0],[0,461,"npe",6936,0,"",0],[0,470,"npe",1690,0,"",0],[0,472,"npe",7586,2,"",0],[0,479,"npe",1303,3,"",0],[0,490,"npe",1257,0,"",0],[0,495,"npe",5456,0,"",0],[0,496,"npe",2303,0,"",0],[0,498,"npe",1661,0,"",0],[0,501,"npe",4968,2,"",0],[0,512,"npe",4971,4,"",0],[0,528,"npe",5544,5,"",0],[0,541,"npe",7114,0,"",0],[0,543,"npe",5328,0,"",0],[0,544,"npe",263,1,"",0],[0,544,"npe",893,0,"",0],[0,544,"npe",967,4,"",0],[0,544,"npe",4872,0,"",0],[0,544,"npe",4922,0,"",0],[0,544,"npe",4945,0,"",0],[0,544,"npe",4947,0,"",0],[0,544,"npe",4976,0,"",0],[0,544,"npe",5010,0,"",0],[0,551,"npe",7457,2,"",0],[0,552,"npe",693,3,"",0],[0,558,"npe",6911,1,"",0],[0,569,"npe",6293,1,"",0],[0,570,"npe",5304,0,"",0],[0,570,"npe",5306,0,"",0],[0,572,"npe",5939,0,"",0],[0,585,"npe",6407,1,"",0],[0,592,"npe",880,0,"",0],[0,592,"npe",882,0,"",0],[0,592,"npe",5358,1,"",0],[0,592,"npe",6688,4,"",0],[0,592,"npe",6700,2,"",0],[0,592,"npe",7778,1,"",0],[0,592,"npe",7884,1,"",0],[0,592,"npe",7893,2,"",0],[0,592,"npe",7900,1,"",0],[0,592,"npe",8149,1,"",0],[0,592,"npe",8266,2,"",0],[0,594,"npe",6763,1,"",0],[0,596,"npe",7219,1,"",0],[0,600,"npe",4556,1,"",0],[0,606,"npe",6456,4,"",0],[0,606,"npe",6561,9,"",0],[0,606,"npe",6576,1,"",0],[0,606,"npe",7248,3,"",0],[0,606,"npe",7256,3,"",0],[0,606,"npe",7381,3,"",0],[0,606,"npe",7508,2,"",0],[0,606,"npe",7565,3,"",0],[0,607,"npe",2805,3,"",0],[0,611,"npe",5372,0,"",0],[0,620,"npe",7159,3,"",0],[0,621,"npe",5684,2,"",0],[0,623,"npe",365,89,"",0],[0,625,"npe",238,3,"",0],[0,625,"npe",243,4,"",0],[0,625,"npe",887,2,"",0],[0,625,"npe",936,3,"",0],[0,625,"npe",1316,1,"",0],[0,625,"npe",1520,1,"",0],[0,625,"npe",1555,12,"",0],[0,626,"npe",1353,0,"",0],[0,628,"npe",2320,3,"",0],[0,628,"npe",2327,2,"",0],[0,628,"npe",2348,1,"",0],[0,628,"npe",2824,5,"",0],[0,628,"npe",2833,1,"",0],[0,628,"npe",2844,1,"",0],[0,628,"npe",3585,0,"",0],[0,628,"npe",4156,0,"",0],[0,628,"npe",5213,7,"",0],[3,-1,"npf",5047,4,"Arrival 1400",0],[3,-1,"npf",6382,7,"Bunker barge",0],[3,-1,"npf",7528,19,"Bunker barge",0],[3,-1,"npf",7486,1,"Bunkering",0],[1,-1,"npf",4674,2,"Campus event",0],[1,-1,"npf",4565,3,"Community sail day",0],[3,-1,"npf",5374,0,"Departs 0600",0],[2,-1,"npf",5377,0,"Dock maintenance - restricted access",0],[3,-1,"npf",5375,1,"ETA 1200",0],[1,-1,"npf",5477,0,"Film crew on dock",0],[2,-1,"npf",4938,6,"Paving near dock entrance",0],[2,-1,"npf",5420,3,"Paving near dock entrance",0],[3,-1,"npf",7488,28,"Provisioning",0],[1,-1,"npf",5310,1,"Rescue drill",0],[2,-1,"npf",5444,2,"Road race - access limited",0],[1,-1,"npf",5424,19,"Safety training (RIBs)",0],[1,-1,"npf",5471,5,"Science stroll",0],[1,-1,"npf",5537,0,"Science stroll",0],[1,-1,"npf",4946,3,"Student tour",0],[0,22,"npf",5637,0,"",0],[0,29,"npf",2456,4,"",0],[0,33,"npf",4967,2,"",0],[0,33,"npf",6189,0,"",0],[0,33,"npf",6191,1,"",0],[0,34,"npf",5688,1,"",0],[0,41,"npf",1360,4,"",0],[0,53,"npf",4622,0,"",0],[0,55,"npf",6052,0,"",0],[0,67,"npf",4587,7,"",0],[0,78,"npf",629,3,"",0],[0,78,"npf",652,2,"",0],[0,80,"npf",4581,5,"",0],[0,84,"npf",1311,0,"",0],[0,84,"npf",5985,0,"",0],[0,84,"npf",5997,0,"",0],[0,86,"npf",7801,1,"",0],[0,90,"npf",4992,14,"",0],[0,99,"npf",4606,0,"",0],[0,125,"npf",1707,0,"",0],[0,132,"npf",3144,3,"",0],[0,139,"npf",5292,1,"",0],[0,139,"npf",5325,1,"",0],[0,177,"npf",5986,0,"",0],[0,186,"npf",1703,0,"",0],[0,192,"npf",2022,0,"",0],[0,192,"npf",2038,30,"",0],[0,192,"npf",2084,3,"",0],[0,192,"npf",2095,3,"",0],[0,192,"npf",2130,1,"",0],[0,192,"npf",2216,0,"",0],[0,192,"npf",2219,0,"",0],[0,192,"npf",2244,2,"",0],[0,193,"npf",2311,30,"",0],[0,217,"npf",3172,3,"",0],[0,233,"npf",954,7,"",0],[0,244,"npf",2370,0,"",0],[0,244,"npf",2375,0,"",0],[0,244,"npf",2446,1,"",0],[0,244,"npf",2538,3,"",0],[0,244,"npf",2574,0,"",0],[0,244,"npf",2576,0,"",0],[0,244,"npf",3478,1,"",0],[0,244,"npf",3603,4,"",0],[0,244,"npf",3668,1,"",0],[0,244,"npf",3969,0,"",0],[0,244,"npf",3973,0,"",0],[0,244,"npf",4142,0,"",0],[0,295,"npf",4552,2,"",0],[0,309,"npf",5889,1,"",0],[0,311,"npf",5332,0,"",0],[0,329,"npf",3206,2,"",0],[0,329,"npf",6310,3,"",0],[0,366,"npf",4957,1,"",0],[0,366,"npf",4960,2,"",0],[0,395,"npf",1662,3,"",0],[0,396,"npf",7151,3,"",0],[0,409,"npf",5529,7,"",0],[0,416,"npf",2070,9,"",0],[0,421,"npf",1612,0,"",0],[0,429,"npf",993,1,"",0],[0,429,"npf",1771,2,"",0],[0,429,"npf",1775,0,"",0],[0,429,"npf",1827,0,"",0],[0,429,"npf",1829,0,"",0],[0,429,"npf",1911,1,"",0],[0,429,"npf",1947,0,"",0],[0,429,"npf",1949,0,"",0],[0,429,"npf",1953,1,"",0],[0,429,"npf",1956,0,"",0],[0,429,"npf",1985,0,"",0],[0,429,"npf",2004,1,"",0],[0,429,"npf",2190,0,"",0],[0,429,"npf",2193,0,"",0],[0,429,"npf",2196,2,"",0],[0,437,"npf",4970,0,"",0],[0,452,"npf",4945,0,"",0],[0,466,"npf",1274,0,"",0],[0,482,"npf",4576,4,"",0],[0,492,"npf",1980,0,"",0],[0,532,"npf",2296,11,"",0],[0,537,"npf",6180,6,"",0],[0,544,"npf",4950,0,"",0],[0,544,"npf",4953,0,"",0],[0,544,"npf",4972,0,"",0],[0,544,"npf",4974,0,"",0],[0,552,"npf",703,5,"",0],[0,589,"npf",7047,1,"",0],[0,602,"npf",6193,14,"",0],[0,626,"npf",1357,1,"",0],[0,628,"npf",4036,0,"",0],[0,628,"npf",4039,1,"",0],[3,-1,"npw",4843,2,"Arrival 1400",0],[3,-1,"npw",7822,1,"Bunker barge",0],[1,-1,"npw",222,0,"Community sail day",0],[1,-1,"npw",256,1,"Community sail day",0],[3,-1,"npw",7079,1,"Departs 0600",0],[2,-1,"npw",5417,1,"Dock maintenance - restricted access",0],[3,-1,"npw",7561,0,"ETA 1200",0],[3,-1,"npw",931,3,"Emergency port call",0],[3,-1,"npw",5306,1,"Emergency port call",0],[2,-1,"npw",1626,0,"Float rebuild - no usage permitted",0],[2,-1,"npw",6797,7,"Road race - access limited",0],[2,-1,"npw",1627,3,"Ultrasonic pier test",0],[2,-1,"npw",7248,10,"Utility work on pier face",0],[0,4,"npw",6522,3,"",0],[0,7,"npw",2309,4,"",0],[0,11,"npw",2371,0,"",0],[0,18,"npw",5221,3,"",0],[0,21,"npw",1239,2,"",0],[0,21,"npw",1357,1,"",0],[0,21,"npw",1367,1,"",0],[0,27,"npw",6766,19,"",0],[0,29,"npw",621,6,"",0],[0,29,"npw",1052,133,"",0],[0,29,"npw",1189,3,"",0],[0,29,"npw",1449,11,"",0],[0,29,"npw",1463,27,"",0],[0,29,"npw",1528,84,"",0],[0,29,"npw",1616,4,"",0],[0,29,"npw",2525,30,"",0],[0,29,"npw",2558,24,"",0],[0,35,"npw",523,0,"",0],[0,35,"npw",1975,0,"",0],[0,43,"npw",2753,0,"",0],[0,44,"npw",6010,0,"",0],[0,56,"npw",4643,1,"",0],[0,64,"npw",6957,7,"",0],[0,72,"npw",4539,0,"",0],[0,73,"npw",2424,1,"",0],[0,75,"npw",1244,0,"",0],[0,75,"npw",1247,38,"",0],[0,77,"npw",252,1,"",0],[0,82,"npw",2251,3,"",0],[0,84,"npw",1322,1,"",0],[0,84,"npw",5305,0,"",0],[0,84,"npw",6354,2,"",0],[0,84,"npw",6989,2,"",0],[0,84,"npw",7011,4,"",0],[0,84,"npw",7048,1,"",0],[0,84,"npw",7177,0,"",0],[0,91,"npw",2342,6,"",0],[0,92,"npw",213,0,"",0],[0,93,"npw",7217,0,"",0],[0,95,"npw",2903,1,"",0],[0,98,"npw",7527,4,"",0],[0,101,"npw",2374,5,"",0],[0,107,"npw",6717,3,"",0],[0,126,"npw",3187,44,"",0],[0,131,"npw",7862,1,"",0],[0,142,"npw",5717,0,"",0],[0,147,"npw",6999,2,"",0],[0,158,"npw",4559,0,"",0],[0,158,"npw",4891,1,"",0],[0,158,"npw",4897,1,"",0],[0,158,"npw",4987,3,"",0],[0,158,"npw",5250,0,"",0],[0,158,"npw",5252,1,"",0],[0,158,"npw",6347,0,"",0],[0,158,"npw",6469,0,"",0],[0,158,"npw",6480,0,"",0],[0,158,"npw",6709,0,"",0],[0,158,"npw",7449,0,"",0],[0,168,"npw",1347,1,"",0],[0,177,"npw",5672,1,"",0],[0,177,"npw",5675,0,"",0],[0,177,"npw",5993,1,"",0],[0,178,"npw",6472,4,"",0],[0,182,"npw",284,4,"",0],[0,182,"npw",299,0,"",0],[0,182,"npw",305,28,"",0],[0,182,"npw",335,47,"",0],[0,182,"npw",395,0,"",0],[0,182,"npw",397,2,"",0],[0,182,"npw",457,16,"",0],[0,182,"npw",2105,4,"",0],[0,182,"npw",2124,4,"",0],[0,182,"npw",2592,14,"",0],[0,182,"npw",2691,5,"",0],[0,182,"npw",2777,4,"",0],[0,182,"npw",2809,56,"",0],[0,182,"npw",2945,96,"",0],[0,182,"npw",3348,25,"",0],[0,182,"npw",4142,6,"",0],[0,182,"npw",4163,5,"",0],[0,182,"npw",4171,10,"",0],[0,182,"npw",4211,12,"",0],[0,182,"npw",4232,6,"",0],[0,182,"npw",4562,57,"",0],[0,182,"npw",4649,6,"",0],[0,182,"npw",4658,1,"",0],[0,182,"npw",4852,13,"",0],[0,182,"npw",4945,16,"",0],[0,182,"npw",4966,12,"",0],[0,182,"npw",4992,6,"",0],[0,182,"npw",6358,1,"",0],[0,182,"npw",6361,2,"",0],[0,182,"npw",6375,6,"",0],[0,182,"npw",7848,4,"",0],[0,182,"npw",7874,3,"",0],[0,191,"npw",1658,0,"",0],[0,192,"npw",1859,0,"",0],[0,192,"npw",1864,1,"",0],[0,192,"npw",1868,1,"",0],[0,192,"npw",1874,0,"",0],[0,192,"npw",1876,0,"",0],[0,192,"npw",1879,0,"",0],[0,192,"npw",1902,0,"",0],[0,192,"npw",1915,1,"",0],[0,192,"npw",1928,0,"",0],[0,192,"npw",1954,2,"",0],[0,192,"npw",1984,0,"",0],[0,192,"npw",2010,1,"",0],[0,192,"npw",2015,0,"",0],[0,192,"npw",2017,0,"",0],[0,192,"npw",2024,1,"",0],[0,192,"npw",2029,2,"",0],[0,192,"npw",2160,0,"",0],[0,192,"npw",2255,23,"",0],[0,192,"npw",2281,12,"",0],[0,194,"npw",2092,4,"",0],[0,204,"npw",2440,3,"",0],[0,204,"npw",2448,4,"",0],[0,225,"npw",5011,22,"",0],[0,225,"npw",6021,95,"",0],[0,225,"npw",6118,15,"",0],[0,228,"npw",871,1,"",0],[0,236,"npw",1840,2,"",0],[0,238,"npw",4962,3,"",0],[0,244,"npw",2298,1,"",0],[0,244,"npw",2301,1,"",0],[0,244,"npw",2402,0,"",0],[0,244,"npw",2502,0,"",0],[0,244,"npw",2504,0,"",0],[0,244,"npw",2584,0,"",0],[0,244,"npw",2662,0,"",0],[0,244,"npw",2664,0,"",0],[0,244,"npw",2666,0,"",0],[0,244,"npw",2676,0,"",0],[0,244,"npw",2678,0,"",0],[0,244,"npw",2729,0,"",0],[0,244,"npw",2732,0,"",0],[0,244,"npw",2740,0,"",0],[0,244,"npw",2742,0,"",0],[0,244,"npw",3633,0,"",0],[0,244,"npw",4150,0,"",0],[0,244,"npw",4154,0,"",0],[0,256,"npw",4561,0,"",0],[0,258,"npw",2722,1,"",0],[0,288,"npw",1949,4,"",0],[0,289,"npw",4156,1,"",0],[0,290,"npw",893,0,"",0],[0,300,"npw",7501,0,"",0],[0,303,"npw",6976,2,"",0],[0,305,"npw",7857,0,"",0],[0,306,"npw",7881,0,"",0],[0,327,"npw",5656,0,"",0],[0,329,"npw",576,3,"",0],[0,329,"npw",597,3,"",0],[0,329,"npw",623,5,"",0],[0,329,"npw",632,2,"",0],[0,329,"npw",647,4,"",0],[0,329,"npw",877,0,"",0],[0,329,"npw",883,0,"",0],[0,329,"npw",914,1,"",0],[0,329,"npw",1353,3,"",0],[0,329,"npw",1362,0,"",0],[0,329,"npw",3602,2,"",0],[0,329,"npw",3607,1,"",0],[0,341,"npw",7172,0,"",0],[0,341,"npw",7176,0,"",0],[0,341,"npw",7220,1,"",0],[0,347,"npw",3498,8,"",0],[0,347,"npw",3516,7,"",0],[0,347,"npw",3530,4,"",0],[0,350,"npw",1835,4,"",0],[0,352,"npw",4917,3,"",0],[0,352,"npw",4926,0,"",0],[0,352,"npw",4929,1,"",0],[0,363,"npw",544,25,"",0],[0,363,"npw",580,3,"",0],[0,363,"npw",616,3,"",0],[0,363,"npw",669,91,"",0],[0,363,"npw",765,6,"",0],[0,363,"npw",810,24,"",0],[0,363,"npw",935,5,"",0],[0,363,"npw",951,15,"",0],[0,363,"npw",986,5,"",0],[0,363,"npw",1293,26,"",0],[0,363,"npw",1407,14,"",0],[0,363,"npw",1713,7,"",0],[0,363,"npw",1771,10,"",0],[0,363,"npw",2038,5,"",0],[0,363,"npw",2052,13,"",0],[0,363,"npw",2178,11,"",0],[0,363,"npw",2191,30,"",0],[0,363,"npw",2225,20,"",0],[0,363,"npw",2358,7,"",0],[0,363,"npw",2390,6,"",0],[0,363,"npw",2406,4,"",0],[0,363,"npw",2492,1,"",0],[0,363,"npw",2496,4,"",0],[0,363,"npw",2543,8,"",0],[0,363,"npw",2630,14,"",0],[0,363,"npw",2647,9,"",0],[0,363,"npw",2797,8,"",0],[0,363,"npw",2922,14,"",0],[0,363,"npw",3091,19,"",0],[0,363,"npw",3124,3,"",0],[0,363,"npw",3130,38,"",0],[0,363,"npw",3239,6,"",0],[0,363,"npw",3251,4,"",0],[0,363,"npw",3260,27,"",0],[0,363,"npw",3306,14,"",0],[0,363,"npw",3377,10,"",0],[0,363,"npw",3395,12,"",0],[0,363,"npw",3418,7,"",0],[0,363,"npw",3443,1,"",0],[0,363,"npw",3454,2,"",0],[0,363,"npw",3557,2,"",0],[0,363,"npw",3561,2,"",0],[0,363,"npw",3575,11,"",0],[0,363,"npw",3621,8,"",0],[0,363,"npw",3634,15,"",0],[0,363,"npw",3652,424,"",0],[0,363,"npw",4080,14,"",0],[0,368,"npw",1988,0,"",0],[0,370,"npw",6402,0,"",0],[0,373,"npw",5699,2,"",0],[0,374,"npw",4626,0,"",0],[0,374,"npw",4629,7,"",0],[0,378,"npw",2762,3,"",0],[0,378,"npw",2769,5,"",0],[0,379,"npw",5369,0,"",0],[0,379,"npw",5376,0,"",0],[0,385,"npw",4109,24,"",0],[0,385,"npw",4138,1,"",0],[0,385,"npw",4189,7,"",0],[0,385,"npw",4273,16,"",0],[0,385,"npw",4291,0,"",0],[0,385,"npw",4298,2,"",0],[0,385,"npw",4306,2,"",0],[0,385,"npw",4313,8,"",0],[0,385,"npw",4324,3,"",0],[0,385,"npw",4522,1,"",0],[0,385,"npw",4527,3,"",0],[0,385,"npw",4536,2,"",0],[0,385,"npw",4545,2,"",0],[0,385,"npw",4553,3,"",0],[0,385,"npw",4670,9,"",0],[0,385,"npw",4683,2,"",0],[0,385,"npw",4694,1,"",0],[0,385,"npw",4702,7,"",0],[0,385,"npw",4730,14,"",0],[0,385,"npw",4748,7,"",0],[0,385,"npw",4768,7,"",0],[0,385,"npw",4779,7,"",0],[0,385,"npw",4810,7,"",0],[0,385,"npw",4830,2,"",0],[0,385,"npw",4838,1,"",0],[0,385,"npw",4866,5,"",0],[0,385,"npw",5035,5,"",0],[0,385,"npw",5043,1,"",0],[0,385,"npw",5047,1,"",0],[0,385,"npw",5051,0,"",0],[0,385,"npw",5214,2,"",0],[0,385,"npw",5226,5,"",0],[0,385,"npw",5348,9,"",0],[0,385,"npw",5361,5,"",0],[0,385,"npw",5370,5,"",0],[0,385,"npw",5377,3,"",0],[0,385,"npw",5387,2,"",0],[0,385,"npw",5394,2,"",0],[0,385,"npw",5399,5,"",0],[0,385,"npw",5419,11,"",0],[0,385,"npw",5435,8,"",0],[0,385,"npw",5541,6,"",0],[0,385,"npw",5552,15,"",0],[0,385,"npw",5570,59,"",0],[0,385,"npw",5633,6,"",0],[0,385,"npw",5648,7,"",0],[0,385,"npw",5685,4,"",0],[0,385,"npw",5691,7,"",0],[0,385,"npw",5728,14,"",0],[0,385,"npw",5774,11,"",0],[0,385,"npw",5791,19,"",0],[0,385,"npw",5813,3,"",0],[0,385,"npw",5833,37,"",0],[0,385,"npw",5890,12,"",0],[0,385,"npw",5938,2,"",0],[0,385,"npw",5949,6,"",0],[0,385,"npw",5957,1,"",0],[0,385,"npw",5964,0,"",0],[0,385,"npw",5970,3,"",0],[0,385,"npw",6134,12,"",0],[0,385,"npw",6152,2,"",0],[0,385,"npw",6162,1,"",0],[0,385,"npw",6170,2,"",0],[0,385,"npw",6174,2,"",0],[0,385,"npw",6243,0,"",0],[0,385,"npw",6283,8,"",0],[0,385,"npw",6301,5,"",0],[0,385,"npw",6315,3,"",0],[0,385,"npw",6326,13,"",0],[0,385,"npw",6348,2,"",0],[0,385,"npw",6513,8,"",0],[0,385,"npw",6528,1,"",0],[0,385,"npw",6534,20,"",0],[0,385,"npw",6561,12,"",0],[0,385,"npw",6662,1,"",0],[0,385,"npw",6666,5,"",0],[0,385,"npw",6686,2,"",0],[0,385,"npw",6701,4,"",0],[0,385,"npw",6730,3,"",0],[0,385,"npw",6744,9,"",0],[0,385,"npw",6755,10,"",0],[0,385,"npw",6837,9,"",0],[0,385,"npw",6850,10,"",0],[0,385,"npw",6865,7,"",0],[0,385,"npw",6881,13,"",0],[0,385,"npw",6896,11,"",0],[0,385,"npw",6910,15,"",0],[0,385,"npw",7022,7,"",0],[0,385,"npw",7033,0,"",0],[0,385,"npw",7042,2,"",0],[0,385,"npw",7065,3,"",0],[0,385,"npw",7084,6,"",0],[0,385,"npw",7094,1,"",0],[0,385,"npw",7260,7,"",0],[0,385,"npw",7293,8,"",0],[0,385,"npw",7307,9,"",0],[0,385,"npw",7382,5,"",0],[0,385,"npw",7400,2,"",0],[0,385,"npw",7412,4,"",0],[0,385,"npw",7485,0,"",0],[0,385,"npw",7487,6,"",0],[0,385,"npw",7509,1,"",0],[0,385,"npw",7535,4,"",0],[0,385,"npw",7546,8,"",0],[0,385,"npw",7569,1,"",0],[0,385,"npw",7582,3,"",0],[0,385,"npw",7597,1,"",0],[0,385,"npw",7600,4,"",0],[0,385,"npw",7615,1,"",0],[0,385,"npw",7625,11,"",0],[0,385,"npw",7639,43,"",0],[0,385,"npw",7687,89,"",0],[0,385,"npw",7798,5,"",0],[0,385,"npw",7808,9,"",0],[0,385,"npw",7824,3,"",0],[0,385,"npw",7960,3,"",0],[0,385,"npw",7968,5,"",0],[0,385,"npw",8004,43,"",0],[0,385,"npw",8052,89,"",0],[0,385,"npw",8165,5,"",0],[0,385,"npw",8175,9,"",0],[0,385,"npw",8189,6,"",0],[0,385,"npw",8280,10,"",0],[0,385,"npw",8295,6,"",0],[0,385,"npw",8324,3,"",0],[0,385,"npw",8332,5,"",0],[0,388,"npw",1749,1,"",0],[0,396,"npw",7147,2,"",0],[0,397,"npw",2900,1,"",0],[0,404,"npw",1941,4,"",0],[0,412,"npw",7883,3,"",0],[0,417,"npw",6423,16,"",0],[0,422,"npw",888,2,"",0],[0,422,"npw",997,3,"",0],[0,422,"npw",4937,2,"",0],[0,425,"npw",2075,4,"",0],[0,429,"npw",969,0,"",0],[0,429,"npw",1007,0,"",0],[0,429,"npw",1010,1,"",0],[0,429,"npw",1013,0,"",0],[0,429,"npw",1029,2,"",0],[0,429,"npw",1500,0,"",0],[0,429,"npw",1502,0,"",0],[0,429,"npw",1516,0,"",0],[0,429,"npw",1518,0,"",0],[0,429,"npw",1651,0,"",0],[0,429,"npw",1653,0,"",0],[0,429,"npw",1703,4,"",0],[0,429,"npw",1711,1,"",0],[0,429,"npw",1732,1,"",0],[0,429,"npw",1735,1,"",0],[0,429,"npw",1754,0,"",0],[0,429,"npw",1756,0,"",0],[0,429,"npw",1794,0,"",0],[0,429,"npw",1799,3,"",0],[0,429,"npw",1804,3,"",0],[0,429,"npw",1810,1,"",0],[0,429,"npw",1815,1,"",0],[0,429,"npw",1848,0,"",0],[0,429,"npw",1850,0,"",0],[0,429,"npw",1855,1,"",0],[0,429,"npw",1971,0,"",0],[0,429,"npw",1973,0,"",0],[0,429,"npw",1979,0,"",0],[0,429,"npw",1990,0,"",0],[0,429,"npw",1994,0,"",0],[0,429,"npw",1998,0,"",0],[0,429,"npw",2000,0,"",0],[0,429,"npw",2005,1,"",0],[0,429,"npw",2009,0,"",0],[0,429,"npw",2018,0,"",0],[0,429,"npw",2113,0,"",0],[0,429,"npw",2115,0,"",0],[0,429,"npw",2119,2,"",0],[0,429,"npw",2123,0,"",0],[0,429,"npw",2134,1,"",0],[0,429,"npw",2171,3,"",0],[0,429,"npw",2247,2,"",0],[0,443,"npw",249,2,"",0],[0,443,"npw",5245,2,"",0],[0,443,"npw",5260,3,"",0],[0,454,"npw",907,0,"",0],[0,456,"npw",5381,1,"",0],[0,462,"npw",262,1,"",0],[0,462,"npw",614,1,"",0],[0,462,"npw",785,1,"",0],[0,462,"npw",909,0,"",0],[0,462,"npw",967,1,"",0],[0,464,"npw",2473,0,"",0],[0,488,"npw",5873,1,"",0],[0,490,"npw",1334,1,"",0],[0,492,"npw",1959,1,"",0],[0,492,"npw",1966,0,"",0],[0,492,"npw",1969,0,"",0],[0,492,"npw",1980,0,"",0],[0,493,"npw",5268,21,"",0],[0,493,"npw",5294,4,"",0],[0,493,"npw",5312,12,"",0],[0,493,"npw",5337,6,"",0],[0,493,"npw",5979,10,"",0],[0,496,"npw",2349,0,"",0],[0,496,"npw",2351,0,"",0],[0,512,"npw",4983,0,"",0],[0,519,"npw",6383,0,"",0],[0,532,"npw",2294,3,"",0],[0,532,"npw",2314,27,"",0],[0,536,"npw",584,2,"",0],[0,544,"npw",237,2,"",0],[0,544,"npw",973,4,"",0],[0,544,"npw",1211,2,"",0],[0,544,"npw",1431,1,"",0],[0,544,"npw",4914,1,"",0],[0,545,"npw",571,2,"",0],[0,568,"npw",6414,1,"",0],[0,569,"npw",6311,0,"",0],[0,581,"npw",7173,0,"",0],[0,582,"npw",5718,3,"",0],[0,592,"npw",631,2,"",0],[0,592,"npw",645,1,"",0],[0,592,"npw",869,0,"",0],[0,592,"npw",1655,2,"",0],[0,592,"npw",1665,1,"",0],[0,592,"npw",1727,0,"",0],[0,592,"npw",7786,3,"",0],[0,592,"npw",7878,2,"",0],[0,592,"npw",8151,3,"",0],[0,592,"npw",8241,2,"",0],[0,596,"npw",6817,2,"",0],[0,603,"npw",7016,0,"",0],[0,606,"npw",6444,4,"",0],[0,606,"npw",6727,2,"",0],[0,607,"npw",2792,3,"",0],[0,617,"npw",6786,10,"",0],[0,617,"npw",6805,11,"",0],[0,617,"npw",6829,7,"",0],[0,620,"npw",7104,5,"",0],[0,620,"npw",7121,1,"",0],[0,620,"npw",7124,3,"",0],[0,620,"npw",7150,5,"",0],[0,620,"npw",7187,6,"",0],[0,620,"npw",7212,4,"",0],[0,620,"npw",7222,5,"",0],[0,620,"npw",7243,0,"",0],[0,620,"npw",7245,1,"",0],[0,620,"npw",7421,1,"",0],[0,620,"npw",7427,8,"",0],[0,620,"npw",7457,5,"",0],[0,625,"npw",1909,1,"",0],[0,625,"npw",1930,2,"",0],[0,627,"npw",7218,0,"",0],[0,628,"npw",3591,0,"",0],[0,628,"npw",3593,1,"",0],[0,628,"npw",4153,0,"",0],[3,-1,"scs",7563,0,"Bunker barge",0],[3,-1,"scs",7843,0,"Bunkering",0],[1,-1,"scs",7564,0,"Community sail day",0],[1,-1,"scs",7464,0,"Film crew on dock",0],[2,-1,"scs",7426,4,"Float rebuild - no usage permitted",0],[3,-1,"scs",7630,0,"Fuel truck",0],[3,-1,"scs",7594,0,"Fueling",0],[3,-1,"scs",7502,0,"Holiday",0],[1,-1,"scs",5410,5,"Public open house",0],[1,-1,"scs",7494,0,"Safety training (RIBs)",0],[1,-1,"scs",7496,1,"Student tour",0],[0,104,"scs",5359,26,"",0],[0,104,"scs",5387,3,"",0],[0,164,"scs",7551,4,"",0],[0,243,"scs",7167,0,"",0],[0,286,"scs",6375,0,"",0],[0,348,"scs",6284,0,"",0],[0,471,"scs",7548,9,"",0],[0,481,"scs",7470,0,"",0],[3,-1,"sfe",4594,1,"Arrives AM",0],[3,-1,"sfe",1631,5,"Departs 0600",0],[3,-1,"sfe",5372,1,"Departure 0800",0],[3,-1,"sfe",2361,0,"ETA 1200",0],[3,-1,"sfe",7561,0,"ETA 1200",0],[3,-1,"sfe",1630,0,"ETD PM",0],[3,-1,"sfe",2362,3,"ETD PM",0],[3,-1,"sfe",7556,1,"ETD PM",0],[1,-1,"sfe",6093,0,"Rescue drill",0],[3,-1,"sfe",7560,0,"Touch and go",0],[2,-1,"sfe",7496,4,"Utility work on pier face",0],[0,0,"sfe",4943,0,"",0],[0,1,"sfe",2102,1,"",0],[0,10,"sfe",2758,1,"",0],[0,14,"sfe",258,0,"",0],[0,31,"sfe",1371,0,"",0],[0,33,"sfe",4626,0,"",0],[0,35,"sfe",261,0,"",0],[0,35,"sfe",570,0,"",0],[0,35,"sfe",893,0,"",0],[0,35,"sfe",1609,2,"",0],[0,35,"sfe",1731,0,"",0],[0,35,"sfe",1992,1,"",0],[0,40,"sfe",2052,0,"",0],[0,61,"sfe",4605,2,"",0],[0,73,"sfe",2381,2,"",0],[0,73,"sfe",3140,0,"",0],[0,89,"sfe",6767,0,"",0],[0,96,"sfe",6377,0,"",0],[0,100,"sfe",6442,0,"",0],[0,105,"sfe",2418,1,"",0],[0,112,"sfe",6433,0,"",0],[0,129,"sfe",2082,0,"",0],[0,137,"sfe",555,1,"",0],[0,137,"sfe",2012,1,"",0],[0,137,"sfe",2367,0,"",0],[0,137,"sfe",2440,1,"",0],[0,137,"sfe",2749,2,"",0],[0,137,"sfe",3165,1,"",0],[0,137,"sfe",3567,3,"",0],[0,137,"sfe",3929,4,"",0],[0,137,"sfe",4660,2,"",0],[0,137,"sfe",5330,0,"",0],[0,148,"sfe",1355,0,"",0],[0,150,"sfe",520,1,"",0],[0,156,"sfe",6404,5,"",0],[0,172,"sfe",1947,1,"",0],[0,172,"sfe",3589,1,"",0],[0,180,"sfe",6443,0,"",0],[0,183,"sfe",2018,0,"",0],[0,189,"sfe",6262,19,"",0],[0,197,"sfe",6084,1,"",0],[0,211,"sfe",5725,0,"",0],[0,231,"sfe",6070,0,"",0],[0,234,"sfe",5337,11,"",0],[0,234,"sfe",6419,0,"",0],[0,239,"sfe",4253,1,"",0],[0,244,"sfe",3774,0,"",0],[0,246,"sfe",4581,0,"",0],[0,256,"sfe",4562,0,"",0],[0,256,"sfe",4958,1,"",0],[0,256,"sfe",4961,3,"",0],[0,261,"sfe",4598,1,"",0],[0,262,"sfe",5333,1,"",0],[0,266,"sfe",5354,3,"",0],[0,268,"sfe",7928,1,"",0],[0,281,"sfe",4929,0,"",0],[0,281,"sfe",6440,1,"",0],[0,281,"sfe",6797,1,"",0],[0,283,"sfe",1239,0,"",0],[0,285,"sfe",4577,1,"",0],[0,289,"sfe",2725,10,"",0],[0,289,"sfe",2739,3,"",0],[0,289,"sfe",2752,3,"",0],[0,289,"sfe",2763,1,"",0],[0,289,"sfe",2769,1,"",0],[0,289,"sfe",2778,3,"",0],[0,289,"sfe",2789,3,"",0],[0,289,"sfe",3086,10,"",0],[0,289,"sfe",3104,2,"",0],[0,289,"sfe",3115,4,"",0],[0,289,"sfe",3127,3,"",0],[0,289,"sfe",3141,3,"",0],[0,289,"sfe",3152,9,"",0],[0,289,"sfe",3199,6,"",0],[0,289,"sfe",3431,8,"",0],[0,289,"sfe",3794,5,"",0],[0,289,"sfe",3804,3,"",0],[0,289,"sfe",4158,13,"",0],[0,289,"sfe",4528,1,"",0],[0,289,"sfe",4536,2,"",0],[0,289,"sfe",4675,1,"",0],[0,289,"sfe",4899,4,"",0],[0,289,"sfe",4906,4,"",0],[0,289,"sfe",4914,8,"",0],[0,289,"sfe",4933,5,"",0],[0,289,"sfe",4968,6,"",0],[0,289,"sfe",4977,15,"",0],[0,289,"sfe",5028,7,"",0],[0,289,"sfe",5251,9,"",0],[0,289,"sfe",5271,6,"",0],[0,289,"sfe",5301,6,"",0],[0,289,"sfe",5388,8,"",0],[0,289,"sfe",5586,43,"",0],[0,289,"sfe",5642,48,"",0],[0,289,"sfe",5759,12,"",0],[0,289,"sfe",5981,8,"",0],[0,289,"sfe",5996,26,"",0],[0,289,"sfe",6025,4,"",0],[0,289,"sfe",6042,4,"",0],[0,289,"sfe",6061,4,"",0],[0,289,"sfe",6115,0,"",0],[0,289,"sfe",6340,7,"",0],[0,289,"sfe",6354,15,"",0],[0,289,"sfe",6371,4,"",0],[0,289,"sfe",6390,5,"",0],[0,289,"sfe",6426,2,"",0],[0,289,"sfe",6697,9,"",0],[0,289,"sfe",6714,3,"",0],[0,289,"sfe",6720,2,"",0],[0,289,"sfe",6725,14,"",0],[0,289,"sfe",6742,4,"",0],[0,289,"sfe",6750,6,"",0],[0,289,"sfe",6776,4,"",0],[0,289,"sfe",6799,11,"",0],[0,289,"sfe",6820,22,"",0],[0,289,"sfe",6849,2,"",0],[0,289,"sfe",6879,14,"",0],[0,289,"sfe",7048,9,"",0],[0,289,"sfe",7060,20,"",0],[0,289,"sfe",7087,7,"",0],[0,289,"sfe",7098,10,"",0],[0,289,"sfe",7114,5,"",0],[0,289,"sfe",7121,0,"",0],[0,289,"sfe",7129,5,"",0],[0,289,"sfe",7144,7,"",0],[0,289,"sfe",7154,1,"",0],[0,289,"sfe",7163,7,"",0],[0,289,"sfe",7186,22,"",0],[0,289,"sfe",7217,3,"",0],[0,289,"sfe",7244,12,"",0],[0,289,"sfe",7409,15,"",0],[0,289,"sfe",7427,24,"",0],[0,289,"sfe",7456,2,"",0],[0,289,"sfe",7465,22,"",0],[0,289,"sfe",7494,9,"",0],[0,289,"sfe",7511,5,"",0],[0,289,"sfe",7520,4,"",0],[0,289,"sfe",7529,8,"",0],[0,289,"sfe",7544,3,"",0],[0,289,"sfe",7570,6,"",0],[0,289,"sfe",7579,0,"",0],[0,289,"sfe",7582,5,"",0],[0,289,"sfe",7798,17,"",0],[0,289,"sfe",7826,6,"",0],[0,289,"sfe",7839,7,"",0],[0,289,"sfe",7851,1,"",0],[0,289,"sfe",7859,9,"",0],[0,289,"sfe",7875,11,"",0],[0,289,"sfe",7893,5,"",0],[0,289,"sfe",7944,9,"",0],[0,289,"sfe",8165,18,"",0],[0,289,"sfe",8187,10,"",0],[0,289,"sfe",8204,7,"",0],[0,289,"sfe",8216,1,"",0],[0,289,"sfe",8224,9,"",0],[0,289,"sfe",8240,6,"",0],[0,289,"sfe",8251,4,"",0],[0,289,"sfe",8262,5,"",0],[0,289,"sfe",8308,9,"",0],[0,292,"sfe",616,6,"",0],[0,301,"sfe",4965,2,"",0],[0,308,"sfe",4197,6,"",0],[0,319,"sfe",5370,1,"",0],[0,323,"sfe",3847,1,"",0],[0,323,"sfe",3859,2,"",0],[0,323,"sfe",3864,2,"",0],[0,323,"sfe",4220,1,"",0],[0,323,"sfe",4229,1,"",0],[0,323,"sfe",4584,1,"",0],[0,323,"sfe",4592,1,"",0],[0,323,"sfe",4948,1,"",0],[0,323,"sfe",4956,1,"",0],[0,323,"sfe",5320,1,"",0],[0,344,"sfe",5326,2,"",0],[0,351,"sfe",6098,3,"",0],[0,351,"sfe",6103,5,"",0],[0,351,"sfe",6111,3,"",0],[0,351,"sfe",7460,0,"",0],[0,351,"sfe",7554,5,"",0],[0,354,"sfe",2406,1,"",0],[0,359,"sfe",5023,1,"",0],[0,361,"sfe",6174,1,"",0],[0,362,"sfe",3181,0,"",0],[0,362,"sfe",6309,2,"",0],[0,383,"sfe",5295,1,"",0],[0,384,"sfe",3855,3,"",0],[0,398,"sfe",3536,1,"",0],[0,403,"sfe",2014,0,"",0],[0,406,"sfe",2045,1,"",0],[0,412,"sfe",7589,2,"",0],[0,419,"sfe",3501,1,"",0],[0,424,"sfe",4993,27,"",0],[0,435,"sfe",4569,0,"",0],[0,435,"sfe",4573,3,"",0],[0,435,"sfe",4583,0,"",0],[0,435,"sfe",4589,1,"",0],[0,435,"sfe",4602,0,"",0],[0,435,"sfe",4633,0,"",0],[0,435,"sfe",4642,0,"",0],[0,435,"sfe",4644,1,"",0],[0,435,"sfe",4647,1,"",0],[0,435,"sfe",4651,3,"",0],[0,435,"sfe",4659,0,"",0],[0,435,"sfe",4665,0,"",0],[0,435,"sfe",4667,3,"",0],[0,435,"sfe",4672,0,"",0],[0,435,"sfe",4682,1,"",0],[0,435,"sfe",4947,0,"",0],[0,435,"sfe",6053,0,"",0],[0,435,"sfe",6102,0,"",0],[0,435,"sfe",6109,1,"",0],[0,435,"sfe",6282,0,"",0],[0,435,"sfe",6297,0,"",0],[0,435,"sfe",6300,0,"",0],[0,435,"sfe",6318,0,"",0],[0,435,"sfe",6330,0,"",0],[0,435,"sfe",6333,0,"",0],[0,435,"sfe",6472,0,"",0],[0,435,"sfe",6475,0,"",0],[0,435,"sfe",6488,0,"",0],[0,435,"sfe",6495,0,"",0],[0,435,"sfe",7224,0,"",0],[0,435,"sfe",7226,1,"",0],[0,435,"sfe",7232,1,"",0],[0,435,"sfe",7538,0,"",0],[0,441,"sfe",2025,0,"",0],[0,441,"sfe",4565,3,"",0],[0,441,"sfe",4612,3,"",0],[0,442,"sfe",6097,0,"",0],[0,453,"sfe",3519,1,"",0],[0,464,"sfe",1031,0,"",0],[0,465,"sfe",1404,5,"",0],[0,469,"sfe",6047,5,"",0],[0,476,"sfe",4691,13,"",0],[0,486,"sfe",2291,2,"",0],[0,486,"sfe",2299,0,"",0],[0,486,"sfe",2302,0,"",0],[0,486,"sfe",2304,0,"",0],[0,486,"sfe",2307,0,"",0],[0,486,"sfe",2312,4,"",0],[0,486,"sfe",2320,0,"",0],[0,486,"sfe",2322,1,"",0],[0,486,"sfe",2327,0,"",0],[0,486,"sfe",2329,1,"",0],[0,486,"sfe",2334,1,"",0],[0,486,"sfe",2343,0,"",0],[0,489,"sfe",578,0,"",0],[0,497,"sfe",1677,0,"",0],[0,507,"sfe",6379,7,"",0],[0,509,"sfe",1678,1,"",0],[0,510,"sfe",4960,0,"",0],[0,514,"sfe",6439,0,"",0],[0,517,"sfe",2054,0,"",0],[0,518,"sfe",3149,0,"",0],[0,519,"sfe",213,3,"",0],[0,519,"sfe",227,1,"",0],[0,519,"sfe",236,5,"",0],[0,519,"sfe",245,0,"",0],[0,519,"sfe",284,4,"",0],[0,519,"sfe",524,7,"",0],[0,519,"sfe",540,1,"",0],[0,519,"sfe",550,2,"",0],[0,519,"sfe",571,4,"",0],[0,519,"sfe",579,4,"",0],[0,519,"sfe",591,4,"",0],[0,519,"sfe",600,6,"",0],[0,519,"sfe",641,5,"",0],[0,519,"sfe",899,6,"",0],[0,519,"sfe",915,4,"",0],[0,519,"sfe",938,3,"",0],[0,519,"sfe",947,4,"",0],[0,519,"sfe",959,4,"",0],[0,519,"sfe",1011,5,"",0],[0,519,"sfe",1262,8,"",0],[0,519,"sfe",1279,4,"",0],[0,519,"sfe",1302,5,"",0],[0,519,"sfe",1315,4,"",0],[0,519,"sfe",1327,9,"",0],[0,519,"sfe",1375,7,"",0],[0,519,"sfe",1627,2,"",0],[0,519,"sfe",1645,4,"",0],[0,519,"sfe",1658,2,"",0],[0,519,"sfe",1668,4,"",0],[0,519,"sfe",1680,4,"",0],[0,519,"sfe",1692,0,"",0],[0,519,"sfe",1695,5,"",0],[0,519,"sfe",1702,2,"",0],[0,519,"sfe",1742,6,"",0],[0,519,"sfe",2035,5,"",0],[0,519,"sfe",2048,3,"",0],[0,519,"sfe",2059,2,"",0],[0,519,"sfe",2065,3,"",0],[0,519,"sfe",2106,8,"",0],[0,519,"sfe",2353,7,"",0],[0,519,"sfe",2375,3,"",0],[0,519,"sfe",2387,3,"",0],[0,519,"sfe",2398,1,"",0],[0,519,"sfe",2404,1,"",0],[0,519,"sfe",2413,3,"",0],[0,519,"sfe",2424,4,"",0],[0,521,"sfe",2027,1,"",0],[0,521,"sfe",3138,1,"",0],[0,523,"sfe",4624,0,"",0],[0,526,"sfe",3890,1,"",0],[0,527,"sfe",1951,0,"",0],[0,527,"sfe",1954,3,"",0],[0,527,"sfe",1969,1,"",0],[0,527,"sfe",1990,0,"",0],[0,527,"sfe",2105,0,"",0],[0,527,"sfe",3587,0,"",0],[0,531,"sfe",2055,2,"",0],[0,533,"sfe",1693,0,"",0],[0,535,"sfe",6066,1,"",0],[0,539,"sfe",5732,0,"",0],[0,541,"sfe",7125,3,"",0],[0,560,"sfe",3904,4,"",0],[0,560,"sfe",4534,1,"",0],[0,561,"sfe",4649,1,"",0],[0,562,"sfe",1208,2,"",0],[0,564,"sfe",1393,4,"",0],[0,565,"sfe",7507,2,"",0],[0,576,"sfe",965,0,"",0],[0,578,"sfe",5735,0,"",0],[0,583,"sfe",4563,0,"",0],[0,586,"sfe",6413,3,"",0],[0,593,"sfe",5240,0,"",0],[0,604,"sfe",1293,1,"",0],[0,605,"sfe",3550,0,"",0],[0,613,"sfe",4843,11,"",0],[0,614,"sfe",1292,0,"",0],[0,625,"sfe",307,7,"",0],[0,625,"sfe",447,7,"",0],[0,625,"sfe",456,4,"",0],[2,-1,"sfw",6079,7,"Bollard replacement, west face",0],[2,-1,"sfw",4017,30,"Concrete work near test wells",0],[3,-1,"sfw",1650,0,"Departs 0600",0],[3,-1,"sfw",7825,0,"Departure 0800",0],[2,-1,"sfw",4108,29,"Dock maintenance - restricted access",0],[1,-1,"sfw",4679,5,"Donor reception",0],[3,-1,"sfw",7559,0,"ETA 1200",0],[2,-1,"sfw",5335,0,"Float rebuild - no usage permitted",0],[2,-1,"sfw",3986,30,"Pier repair - no docking",0],[1,-1,"sfw",5356,0,"Science stroll",0],[1,-1,"sfw",4970,0,"Student tour",0],[2,-1,"sfw",4077,30,"Ultrasonic pier test",0],[2,-1,"sfw",6087,29,"Ultrasonic pier test",0],[0,13,"sfw",1315,2,"",0],[0,16,"sfw",6460,15,"",0],[0,16,"sfw",6485,13,"",0],[0,17,"sfw",2023,1,"",0],[0,25,"sfw",6040,3,"",0],[0,32,"sfw",5267,0,"",0],[0,32,"sfw",5310,0,"",0],[0,41,"sfw",1269,8,"",0],[0,49,"sfw",6381,0,"",0],[0,62,"sfw",3537,1,"",0],[0,94,"sfw",7133,0,"",0],[0,102,"sfw",4581,0,"",0],[0,106,"sfw",4982,1,"",0],[0,109,"sfw",7490,0,"",0],[0,110,"sfw",587,4,"",0],[0,112,"sfw",6802,0,"",0],[0,112,"sfw",7106,0,"",0],[0,113,"sfw",597,0,"",0],[0,124,"sfw",6816,0,"",0],[0,130,"sfw",6804,0,"",0],[0,130,"sfw",6825,0,"",0],[0,132,"sfw",3147,2,"",0],[0,137,"sfw",577,0,"",0],[0,137,"sfw",580,2,"",0],[0,137,"sfw",2010,0,"",0],[0,137,"sfw",2115,1,"",0],[0,137,"sfw",2374,0,"",0],[0,137,"sfw",2379,1,"",0],[0,137,"sfw",2743,1,"",0],[0,137,"sfw",4164,3,"",0],[0,137,"sfw",6047,0,"",0],[0,145,"sfw",3804,0,"",0],[0,149,"sfw",6023,0,"",0],[0,149,"sfw",6027,1,"",0],[0,159,"sfw",1622,0,"",0],[0,169,"sfw",2410,2,"",0],[0,179,"sfw",944,1,"",0],[0,183,"sfw",2025,0,"",0],[0,183,"sfw",2028,0,"",0],[0,183,"sfw",2032,0,"",0],[0,183,"sfw",2035,0,"",0],[0,183,"sfw",2040,0,"",0],[0,183,"sfw",2057,0,"",0],[0,192,"sfw",2501,4,"",0],[0,192,"sfw",2508,4,"",0],[0,192,"sfw",2977,3,"",0],[0,198,"sfw",1291,1,"",0],[0,203,"sfw",6405,0,"",0],[0,206,"sfw",218,2,"",0],[0,212,"sfw",7880,0,"",0],[0,213,"sfw",6388,1,"",0],[0,218,"sfw",820,29,"",0],[0,218,"sfw",854,18,"",0],[0,218,"sfw",1240,27,"",0],[0,221,"sfw",6033,0,"",0],[0,227,"sfw",5348,0,"",0],[0,234,"sfw",6437,0,"",0],[0,235,"sfw",4945,1,"",0],[0,239,"sfw",3072,0,"",0],[0,241,"sfw",2044,0,"",0],[0,244,"sfw",2994,0,"",0],[0,244,"sfw",3359,17,"",0],[0,248,"sfw",2344,1,"",0],[0,251,"sfw",6122,0,"",0],[0,254,"sfw",4972,0,"",0],[0,256,"sfw",4960,0,"",0],[0,266,"sfw",4990,0,"",0],[0,266,"sfw",4992,0,"",0],[0,266,"sfw",5315,3,"",0],[0,268,"sfw",7917,0,"",0],[0,269,"sfw",5263,0,"",0],[0,272,"sfw",7560,0,"",0],[0,276,"sfw",4974,4,"",0],[0,279,"sfw",5336,1,"",0],[0,280,"sfw",7161,0,"",0],[0,281,"sfw",7122,1,"",0],[0,289,"sfw",5695,18,"",0],[0,292,"sfw",6181,27,"",0],[0,307,"sfw",6784,0,"",0],[0,317,"sfw",6058,1,"",0],[0,345,"sfw",7149,0,"",0],[0,351,"sfw",6476,2,"",0],[0,351,"sfw",7187,1,"",0],[0,351,"sfw",7197,5,"",0],[0,351,"sfw",7204,1,"",0],[0,351,"sfw",7214,15,"",0],[0,353,"sfw",6723,0,"",0],[0,359,"sfw",4995,1,"",0],[0,359,"sfw",4999,10,"",0],[0,361,"sfw",6178,2,"",0],[0,382,"sfw",5311,0,"",0],[0,383,"sfw",6025,1,"",0],[0,390,"sfw",2981,0,"",0],[0,390,"sfw",3346,12,"",0],[0,396,"sfw",7150,1,"",0],[0,399,"sfw",5346,0,"",0],[0,421,"sfw",1629,0,"",0],[0,423,"sfw",6363,0,"",0],[0,432,"sfw",7542,1,"",0],[0,435,"sfw",4579,0,"",0],[0,435,"sfw",4595,0,"",0],[0,435,"sfw",4597,0,"",0],[0,435,"sfw",4654,0,"",0],[0,435,"sfw",4661,2,"",0],[0,435,"sfw",4675,2,"",0],[0,435,"sfw",4857,1,"",0],[0,435,"sfw",4860,0,"",0],[0,435,"sfw",4868,4,"",0],[0,435,"sfw",4875,3,"",0],[0,435,"sfw",4882,2,"",0],[0,435,"sfw",4890,1,"",0],[0,435,"sfw",4897,1,"",0],[0,435,"sfw",4901,1,"",0],[0,435,"sfw",4907,1,"",0],[0,435,"sfw",4913,0,"",0],[0,435,"sfw",4920,1,"",0],[0,435,"sfw",4923,0,"",0],[0,435,"sfw",4930,1,"",0],[0,435,"sfw",4935,0,"",0],[0,435,"sfw",4937,0,"",0],[0,435,"sfw",4949,3,"",0],[0,435,"sfw",4956,0,"",0],[0,435,"sfw",4961,0,"",0],[0,435,"sfw",4966,0,"",0],[0,435,"sfw",4973,0,"",0],[0,435,"sfw",4979,0,"",0],[0,435,"sfw",4997,1,"",0],[0,435,"sfw",5011,2,"",0],[0,435,"sfw",5015,1,"",0],[0,435,"sfw",5018,1,"",0],[0,435,"sfw",5039,1,"",0],[0,435,"sfw",5042,1,"",0],[0,435,"sfw",5220,1,"",0],[0,435,"sfw",5223,2,"",0],[0,435,"sfw",5227,1,"",0],[0,435,"sfw",5234,2,"",0],[0,435,"sfw",5241,1,"",0],[0,435,"sfw",5245,2,"",0],[0,435,"sfw",5249,0,"",0],[0,435,"sfw",5252,0,"",0],[0,435,"sfw",5254,0,"",0],[0,435,"sfw",5268,1,"",0],[0,435,"sfw",5273,1,"",0],[0,435,"sfw",5281,0,"",0],[0,435,"sfw",5285,0,"",0],[0,435,"sfw",5288,0,"",0],[0,435,"sfw",5290,1,"",0],[0,435,"sfw",5298,3,"",0],[0,435,"sfw",5305,2,"",0],[0,435,"sfw",5309,0,"",0],[0,435,"sfw",5312,0,"",0],[0,435,"sfw",5314,0,"",0],[0,435,"sfw",5319,0,"",0],[0,435,"sfw",5328,0,"",0],[0,435,"sfw",5338,1,"",0],[0,435,"sfw",5344,0,"",0],[0,435,"sfw",5363,0,"",0],[0,435,"sfw",5365,0,"",0],[0,435,"sfw",5379,1,"",0],[0,435,"sfw",5398,1,"",0],[0,435,"sfw",5403,2,"",0],[0,435,"sfw",5409,0,"",0],[0,435,"sfw",5413,0,"",0],[0,435,"sfw",5422,0,"",0],[0,435,"sfw",5605,0,"",0],[0,435,"sfw",5612,0,"",0],[0,435,"sfw",5620,0,"",0],[0,435,"sfw",5667,0,"",0],[0,435,"sfw",5964,0,"",0],[0,435,"sfw",5971,0,"",0],[0,435,"sfw",5979,0,"",0],[0,435,"sfw",6032,0,"",0],[0,435,"sfw",6039,0,"",0],[0,435,"sfw",6046,0,"",0],[0,435,"sfw",6060,0,"",0],[0,435,"sfw",6065,1,"",0],[0,435,"sfw",6072,0,"",0],[0,435,"sfw",6120,0,"",0],[0,435,"sfw",6133,0,"",0],[0,435,"sfw",6137,1,"",0],[0,435,"sfw",6141,0,"",0],[0,435,"sfw",6333,0,"",0],[0,435,"sfw",6339,1,"",0],[0,435,"sfw",6344,0,"",0],[0,435,"sfw",6346,2,"",0],[0,435,"sfw",6362,0,"",0],[0,435,"sfw",6369,0,"",0],[0,435,"sfw",6373,1,"",0],[0,435,"sfw",6393,0,"",0],[0,435,"sfw",6399,0,"",0],[0,435,"sfw",6403,0,"",0],[0,435,"sfw",6406,0,"",0],[0,435,"sfw",6411,0,"",0],[0,435,"sfw",6413,1,"",0],[0,435,"sfw",6420,0,"",0],[0,435,"sfw",6425,0,"",0],[0,435,"sfw",6427,0,"",0],[0,435,"sfw",6432,1,"",0],[0,435,"sfw",6439,0,"",0],[0,435,"sfw",6442,0,"",0],[0,435,"sfw",6457,1,"",0],[0,435,"sfw",6502,1,"",0],[0,435,"sfw",6651,0,"",0],[0,435,"sfw",6668,0,"",0],[0,435,"sfw",6679,0,"",0],[0,435,"sfw",6692,2,"",0],[0,435,"sfw",6697,0,"",0],[0,435,"sfw",6700,1,"",0],[0,435,"sfw",6704,0,"",0],[0,435,"sfw",6707,2,"",0],[0,435,"sfw",6714,0,"",0],[0,435,"sfw",6716,0,"",0],[0,435,"sfw",6737,1,"",0],[0,435,"sfw",6743,0,"",0],[0,435,"sfw",6750,1,"",0],[0,435,"sfw",6753,0,"",0],[0,435,"sfw",6759,0,"",0],[0,435,"sfw",6763,3,"",0],[0,435,"sfw",6771,2,"",0],[0,435,"sfw",6779,0,"",0],[0,435,"sfw",6787,0,"",0],[0,435,"sfw",6789,0,"",0],[0,435,"sfw",6793,2,"",0],[0,435,"sfw",6819,0,"",0],[0,435,"sfw",6835,1,"",0],[0,435,"sfw",6841,0,"",0],[0,435,"sfw",6844,0,"",0],[0,435,"sfw",6846,0,"",0],[0,435,"sfw",6850,2,"",0],[0,435,"sfw",6858,2,"",0],[0,435,"sfw",6866,0,"",0],[0,435,"sfw",6871,0,"",0],[0,435,"sfw",6873,0,"",0],[0,435,"sfw",6888,0,"",0],[0,435,"sfw",7030,1,"",0],[0,435,"sfw",7047,0,"",0],[0,435,"sfw",7050,0,"",0],[0,435,"sfw",7053,1,"",0],[0,435,"sfw",7060,2,"",0],[0,435,"sfw",7066,1,"",0],[0,435,"sfw",7069,7,"",0],[0,435,"sfw",7081,0,"",0],[0,435,"sfw",7088,0,"",0],[0,435,"sfw",7090,0,"",0],[0,435,"sfw",7092,2,"",0],[0,435,"sfw",7100,0,"",0],[0,435,"sfw",7103,0,"",0],[0,435,"sfw",7113,1,"",0],[0,435,"sfw",7129,3,"",0],[0,435,"sfw",7136,2,"",0],[0,435,"sfw",7145,1,"",0],[0,435,"sfw",7152,1,"",0],[0,435,"sfw",7156,1,"",0],[0,435,"sfw",7159,0,"",0],[0,435,"sfw",7164,0,"",0],[0,435,"sfw",7186,0,"",0],[0,435,"sfw",7195,1,"",0],[0,435,"sfw",7203,0,"",0],[0,435,"sfw",7206,0,"",0],[0,435,"sfw",7235,1,"",0],[0,435,"sfw",7249,0,"",0],[0,435,"sfw",7397,0,"",0],[0,435,"sfw",7418,0,"",0],[0,435,"sfw",7422,1,"",0],[0,435,"sfw",7428,2,"",0],[0,435,"sfw",7434,0,"",0],[0,435,"sfw",7436,0,"",0],[0,435,"sfw",7441,0,"",0],[0,435,"sfw",7448,1,"",0],[0,435,"sfw",7456,1,"",0],[0,435,"sfw",7459,0,"",0],[0,435,"sfw",7463,0,"",0],[0,435,"sfw",7467,0,"",0],[0,435,"sfw",7478,0,"",0],[0,435,"sfw",7480,0,"",0],[0,435,"sfw",7487,1,"",0],[0,435,"sfw",7492,0,"",0],[0,435,"sfw",7496,0,"",0],[0,435,"sfw",7499,1,"",0],[0,435,"sfw",7502,0,"",0],[0,435,"sfw",7509,0,"",0],[0,435,"sfw",7514,1,"",0],[0,435,"sfw",7523,0,"",0],[0,435,"sfw",7525,0,"",0],[0,435,"sfw",7529,0,"",0],[0,435,"sfw",7561,1,"",0],[0,435,"sfw",7564,1,"",0],[0,435,"sfw",7571,1,"",0],[0,435,"sfw",7578,1,"",0],[0,435,"sfw",7581,1,"",0],[0,435,"sfw",7585,0,"",0],[0,435,"sfw",7592,0,"",0],[0,435,"sfw",7617,0,"",0],[0,435,"sfw",7619,0,"",0],[0,435,"sfw",7772,0,"",0],[0,435,"sfw",7786,0,"",0],[0,435,"sfw",7792,0,"",0],[0,435,"sfw",7797,2,"",0],[0,435,"sfw",7804,1,"",0],[0,435,"sfw",7813,0,"",0],[0,435,"sfw",7830,0,"",0],[0,435,"sfw",7845,0,"",0],[0,435,"sfw",7851,0,"",0],[0,435,"sfw",7858,0,"",0],[0,435,"sfw",7860,0,"",0],[0,435,"sfw",7863,0,"",0],[0,435,"sfw",7865,0,"",0],[0,435,"sfw",7872,0,"",0],[0,435,"sfw",7879,0,"",0],[0,435,"sfw",7884,0,"",0],[0,435,"sfw",7886,0,"",0],[0,435,"sfw",7890,0,"",0],[0,435,"sfw",7900,0,"",0],[0,435,"sfw",7921,0,"",0],[0,435,"sfw",7931,1,"",0],[0,435,"sfw",8138,0,"",0],[0,435,"sfw",8152,0,"",0],[0,435,"sfw",8157,0,"",0],[0,435,"sfw",8162,2,"",0],[0,435,"sfw",8169,1,"",0],[0,435,"sfw",8178,0,"",0],[0,435,"sfw",8189,0,"",0],[0,435,"sfw",8204,0,"",0],[0,435,"sfw",8218,0,"",0],[0,435,"sfw",8225,0,"",0],[0,435,"sfw",8227,0,"",0],[0,435,"sfw",8230,0,"",0],[0,435,"sfw",8232,0,"",0],[0,435,"sfw",8239,0,"",0],[0,435,"sfw",8246,0,"",0],[0,441,"sfw",2759,1,"",0],[0,441,"sfw",5347,0,"",0],[0,444,"sfw",6050,7,"",0],[0,456,"sfw",4984,4,"",0],[0,459,"sfw",5987,0,"",0],[0,464,"sfw",980,0,"",0],[0,473,"sfw",5357,0,"",0],[0,475,"sfw",2066,0,"",0],[0,486,"sfw",2359,0,"",0],[0,486,"sfw",2751,2,"",0],[0,486,"sfw",2765,1,"",0],[0,486,"sfw",2769,0,"",0],[0,486,"sfw",2810,1,"",0],[0,486,"sfw",2815,0,"",0],[0,486,"sfw",2820,0,"",0],[0,486,"sfw",2823,0,"",0],[0,486,"sfw",2832,0,"",0],[0,486,"sfw",2835,0,"",0],[0,486,"sfw",2840,0,"",0],[0,489,"sfw",1656,0,"",0],[0,497,"sfw",1678,0,"",0],[0,501,"sfw",4968,1,"",0],[0,503,"sfw",7134,1,"",0],[0,513,"sfw",6013,0,"",0],[0,515,"sfw",913,1,"",0],[0,522,"sfw",6370,2,"",0],[0,522,"sfw",6377,2,"",0],[0,522,"sfw",6725,1,"",0],[0,522,"sfw",6733,1,"",0],[0,522,"sfw",6739,1,"",0],[0,522,"sfw",6830,2,"",0],[0,522,"sfw",7537,1,"",0],[0,524,"sfw",5343,0,"",0],[0,526,"sfw",1667,1,"",0],[0,527,"sfw",2037,0,"",0],[0,527,"sfw",2048,0,"",0],[0,527,"sfw",2051,0,"",0],[0,527,"sfw",2114,0,"",0],[0,527,"sfw",2415,0,"",0],[0,527,"sfw",2464,0,"",0],[0,527,"sfw",2471,4,"",0],[0,527,"sfw",2658,0,"",0],[0,527,"sfw",2671,3,"",0],[0,527,"sfw",2679,3,"",0],[0,527,"sfw",2685,0,"",0],[0,527,"sfw",2694,2,"",0],[0,527,"sfw",2698,0,"",0],[0,527,"sfw",2701,0,"",0],[0,527,"sfw",2712,0,"",0],[0,527,"sfw",3017,1,"",0],[0,527,"sfw",3022,2,"",0],[0,527,"sfw",3034,1,"",0],[0,527,"sfw",3042,0,"",0],[0,527,"sfw",3044,0,"",0],[0,527,"sfw",3051,1,"",0],[0,527,"sfw",3056,2,"",0],[0,527,"sfw",3064,0,"",0],[0,527,"sfw",3076,1,"",0],[0,527,"sfw",3098,0,"",0],[0,527,"sfw",3105,0,"",0],[0,527,"sfw",3126,0,"",0],[0,527,"sfw",3133,0,"",0],[0,538,"sfw",3091,3,"",0],[0,541,"sfw",6744,2,"",0],[0,541,"sfw",6799,2,"",0],[0,541,"sfw",6809,1,"",0],[0,541,"sfw",7110,2,"",0],[0,541,"sfw",7244,3,"",0],[0,547,"sfw",2049,1,"",0],[0,548,"sfw",7503,0,"",0],[0,557,"sfw",7189,0,"",0],[0,557,"sfw",7493,0,"",0],[0,566,"sfw",7870,0,"",0],[0,567,"sfw",969,0,"",0],[0,587,"sfw",7099,0,"",0],[0,588,"sfw",5025,13,"",0],[0,608,"sfw",2018,4,"",0],[0,608,"sfw",2059,1,"",0],[0,615,"sfw",878,0,"",0],[0,618,"sfw",2061,0,"",0],[0,624,"sfw",7465,0,"",0],[0,625,"sfw",1318,110,"",0],[0,625,"sfw",1461,58,"",0],[0,625,"sfw",1581,40,"",0],[3,-1,"uns",5338,0,"Arrival 1400",1],[3,-1,"uns",7655,0,"Arrival 1400",1],[3,-1,"uns",7791,0,"Arrival 1400",1],[2,-1,"uns",5333,3,"Bollard replacement, west face",1],[2,-1,"uns",5875,25,"Bollard replacement, west face",1],[2,-1,"uns",5964,29,"Bollard replacement, west face",1],[2,-1,"uns",6117,0,"Bollard replacement, west face",1],[2,-1,"uns",6278,5,"Bollard replacement, west face",1],[2,-1,"uns",7152,7,"Bollard replacement, west face",1],[2,-1,"uns",7165,17,"Bollard replacement, west face",1],[3,-1,"uns",6063,0,"Bunker barge",1],[3,-1,"uns",7057,0,"Bunker barge",1],[3,-1,"uns",7059,0,"Bunker barge",1],[3,-1,"uns",7763,0,"Bunker barge",1],[3,-1,"uns",7790,0,"Bunker barge",1],[3,-1,"uns",7834,0,"Bunker barge",1],[3,-1,"uns",5006,0,"Bunkering",1],[3,-1,"uns",6099,0,"Bunkering",1],[3,-1,"uns",6330,0,"Bunkering",1],[3,-1,"uns",6348,0,"Bunkering",1],[3,-1,"uns",6539,0,"Bunkering",1],[3,-1,"uns",7518,0,"Bunkering",1],[3,-1,"uns",6349,0,"Bunkering 1000",1],[3,-1,"uns",7052,0,"Bunkering 1000",1],[3,-1,"uns",7869,0,"Bunkering 1000",1],[1,-1,"uns",3432,4,"Campus event",1],[1,-1,"uns",5348,6,"Campus event",1],[1,-1,"uns",5372,0,"Campus event",1],[1,-1,"uns",6039,0,"Campus event",1],[1,-1,"uns",6254,0,"Campus event",1],[1,-1,"uns",6410,0,"Campus event",1],[1,-1,"uns",5282,5,"Community sail day",1],[1,-1,"uns",5372,0,"Community sail day",1],[1,-1,"uns",6054,0,"Community sail day",1],[1,-1,"uns",6766,0,"Community sail day",1],[1,-1,"uns",8231,0,"Community sail day",1],[2,-1,"uns",5288,5,"Concrete work near test wells",1],[2,-1,"uns",5869,4,"Concrete work near test wells",1],[2,-1,"uns",6144,0,"Concrete work near test wells",1],[2,-1,"uns",7015,13,"Concrete work near test wells",1],[2,-1,"uns",5606,22,"Crane access - berth closed",1],[3,-1,"uns",4967,14,"Delayed due to weather",1],[3,-1,"uns",5306,0,"Delayed due to weather",1],[3,-1,"uns",5339,0,"Delayed due to weather",1],[3,-1,"uns",6034,0,"Delayed due to weather",1],[3,-1,"uns",4942,0,"Departs 0600",1],[1,-1,"uns",5393,13,"Dive training",1],[1,-1,"uns",7161,0,"Dive training",1],[1,-1,"uns",7858,0,"Dive training",1],[2,-1,"uns",6385,1,"Dock inspection",1],[2,-1,"uns",6124,0,"Dock maintenance - restricted access",1],[2,-1,"uns",7328,2,"Dock maintenance - restricted access",1],[1,-1,"uns",6141,0,"Donor reception",1],[1,-1,"uns",7866,0,"Donor reception",1],[3,-1,"uns",5005,0,"ETA 1200",1],[3,-1,"uns",6762,0,"ETA 1200",1],[3,-1,"uns",7781,0,"ETA 1200",1],[3,-1,"uns",8384,0,"ETD PM",1],[3,-1,"uns",5032,8,"Emergency port call",1],[1,-1,"uns",7138,0,"Film crew on dock",1],[2,-1,"uns",5872,28,"Float rebuild - no usage permitted",1],[3,-1,"uns",4918,5,"Fuel truck",1],[3,-1,"uns",6730,0,"Fuel truck",1],[3,-1,"uns",6769,0,"Fuel truck",1],[3,-1,"uns",7757,0,"Fuel truck",1],[3,-1,"uns",7797,0,"Fuel truck",1],[3,-1,"uns",7843,0,"Fuel truck",1],[3,-1,"uns",8122,0,"Fuel truck",1],[3,-1,"uns",4972,18,"Fueling",1],[3,-1,"uns",6836,0,"Fueling",1],[3,-1,"uns",7857,0,"Fueling",1],[3,-1,"uns",5028,3,"Fueling @0800",1],[3,-1,"uns",6731,0,"Fueling @0800",1],[3,-1,"uns",6746,0,"Fueling @0800",1],[3,-1,"uns",7362,0,"Fueling @0800",1],[3,-1,"uns",7822,0,"Fueling @0800",1],[3,-1,"uns",5347,0,"Holiday",1],[3,-1,"uns",5426,0,"Holiday",1],[3,-1,"uns",6048,0,"Holiday",1],[3,-1,"uns",6870,0,"Holiday",1],[3,-1,"uns",5321,2,"Load equipment",1],[3,-1,"uns",6256,0,"Load equipment",1],[3,-1,"uns",7055,0,"Load equipment",1],[2,-1,"uns",6731,0,"Pier repair - no docking",1],[2,-1,"uns",7139,12,"Pier repair - no docking",1],[3,-1,"uns",5340,1,"Provisioning",1],[3,-1,"uns",5951,0,"Provisioning",1],[3,-1,"uns",7804,0,"Provisioning",1],[1,-1,"uns",6061,1,"Public open house",1],[1,-1,"uns",5340,1,"Rescue drill",1],[1,-1,"uns",5976,0,"Rescue drill",1],[1,-1,"uns",6005,0,"Rescue drill",1],[3,-1,"uns",5335,4,"Returns from sea trials",1],[3,-1,"uns",8016,0,"Returns from sea trials",1],[2,-1,"uns",6274,0,"Road race - access limited",1],[2,-1,"uns",6717,0,"Road race - access limited",1],[2,-1,"uns",6774,0,"Road race - access limited",1],[1,-1,"uns",4235,0,"Safety training (RIBs)",1],[1,-1,"uns",5042,5,"Safety training (RIBs)",1],[1,-1,"uns",7130,0,"Safety training (RIBs)",1],[1,-1,"uns",5330,0,"Student tour",1],[3,-1,"uns",4970,1,"Touch and go",1],[3,-1,"uns",5003,0,"Touch and go",1],[3,-1,"uns",5234,0,"Touch and go",1],[3,-1,"uns",5670,0,"Touch and go",1],[2,-1,"uns",7030,7,"Ultrasonic pier test",1],[2,-1,"uns",4838,12,"Utility work on pier face",1],[2,-1,"uns",5995,29,"Utility work on pier face",1],[2,-1,"uns",6413,0,"Utility work on pier face",1],[3,-1,"uns",4965,0,"Water/slops pumping",1],[3,-1,"uns",4996,0,"Water/slops pumping",1],[3,-1,"uns",6299,3,"Water/slops pumping",1],[3,-1,"uns",7799,0,"Water/slops pumping",1],[3,-1,"uns",7850,0,"Water/slops pumping",1],[3,-1,"uns",6050,1,"Wire spooling",1],[0,6,"uns",2013,0,"",1],[0,6,"uns",2383,0,"",1],[0,19,"uns",6187,0,"",1],[0,26,"uns",5241,7,"",1],[0,28,"uns",5952,0,"",1],[0,33,"uns",5661,0,"",1],[0,33,"uns",6025,0,"",1],[0,33,"uns",7281,0,"",1],[0,33,"uns",7646,0,"",1],[0,33,"uns",8007,0,"",1],[0,33,"uns",8375,0,"",1],[0,38,"uns",5161,10,"",1],[0,38,"uns",5203,29,"",1],[0,42,"uns",6343,0,"",1],[0,52,"uns",5276,5,"",1],[0,65,"uns",5532,0,"",1],[0,68,"uns",5251,8,"",1],[0,83,"uns",6355,0,"",1],[0,83,"uns",6357,0,"",1],[0,84,"uns",5672,0,"",1],[0,84,"uns",7293,1,"",1],[0,84,"uns",7657,1,"",1],[0,87,"uns",5250,0,"",1],[0,99,"uns",4929,0,"",1],[0,117,"uns",6444,0,"",1],[0,121,"uns",5342,1,"",1],[0,127,"uns",3452,15,"",1],[0,135,"uns",4962,1,"",1],[0,144,"uns",6437,0,"",1],[0,146,"uns",5371,0,"",1],[0,158,"uns",4931,1,"",1],[0,158,"uns",4970,2,"",1],[0,158,"uns",7279,1,"",1],[0,158,"uns",7644,1,"",1],[0,158,"uns",8005,1,"",1],[0,158,"uns",8373,1,"",1],[0,174,"uns",6096,2,"",1],[0,182,"uns",5666,0,"",1],[0,182,"uns",6030,0,"",1],[0,182,"uns",6758,0,"",1],[0,182,"uns",7286,0,"",1],[0,182,"uns",7651,0,"",1],[0,182,"uns",8012,0,"",1],[0,182,"uns",8380,0,"",1],[0,187,"uns",7064,0,"",1],[0,187,"uns",7076,0,"",1],[0,209,"uns",7072,5,"",1],[0,224,"uns",5210,10,"",1],[0,245,"uns",6271,0,"",1],[0,257,"uns",2049,6,"",1],[0,260,"uns",6811,0,"",1],[0,266,"uns",4983,2,"",1],[0,267,"uns",5700,19,"",1],[0,276,"uns",5303,2,"",1],[0,278,"uns",5269,32,"",1],[0,289,"uns",4934,1,"",1],[0,289,"uns",5662,1,"",1],[0,289,"uns",6026,1,"",1],[0,289,"uns",7282,1,"",1],[0,289,"uns",7647,1,"",1],[0,289,"uns",8008,1,"",1],[0,289,"uns",8376,1,"",1],[0,297,"uns",7734,3,"",1],[0,297,"uns",8099,3,"",1],[0,304,"uns",1950,0,"",1],[0,304,"uns",1981,0,"",1],[0,304,"uns",2017,0,"",1],[0,304,"uns",2040,0,"",1],[0,304,"uns",2315,0,"",1],[0,304,"uns",2343,0,"",1],[0,304,"uns",2387,0,"",1],[0,304,"uns",2409,0,"",1],[0,318,"uns",6036,0,"",1],[0,323,"uns",4936,1,"",1],[0,323,"uns",5664,1,"",1],[0,323,"uns",6028,1,"",1],[0,323,"uns",6756,1,"",1],[0,323,"uns",7284,1,"",1],[0,323,"uns",7649,1,"",1],[0,323,"uns",8010,1,"",1],[0,323,"uns",8378,1,"",1],[0,325,"uns",5343,0,"",1],[0,328,"uns",7800,0,"",1],[0,333,"uns",6010,14,"",1],[0,333,"uns",6026,3,"",1],[0,334,"uns",2026,1,"",1],[0,338,"uns",257,0,"",1],[0,349,"uns",7172,9,"",1],[0,357,"uns",5271,4,"",1],[0,360,"uns",6213,26,"",1],[0,369,"uns",4909,0,"",1],[0,385,"uns",4940,0,"",1],[0,385,"uns",5668,0,"",1],[0,385,"uns",6032,0,"",1],[0,385,"uns",6760,0,"",1],[0,385,"uns",7288,0,"",1],[0,385,"uns",7653,0,"",1],[0,385,"uns",8014,0,"",1],[0,385,"uns",8382,0,"",1],[0,389,"uns",2034,1,"",1],[0,391,"uns",6344,0,"",1],[0,413,"uns",5337,0,"",1],[0,435,"uns",4930,0,"",1],[0,435,"uns",7278,0,"",1],[0,435,"uns",7643,0,"",1],[0,435,"uns",8004,0,"",1],[0,435,"uns",8372,0,"",1],[0,438,"uns",5317,6,"",1],[0,445,"uns",6047,0,"",1],[0,450,"uns",4989,1,"",1],[0,450,"uns",4992,1,"",1],[0,471,"uns",7160,4,"",1],[0,471,"uns",7183,15,"",1],[0,471,"uns",7531,15,"",1],[0,477,"uns",5311,0,"",1],[0,480,"uns",5289,4,"",1],[0,484,"uns",6078,0,"",1],[0,488,"uns",5848,5,"",1],[0,508,"uns",5330,0,"",1],[0,511,"uns",4910,7,"",1],[0,516,"uns",3174,8,"",1],[0,525,"uns",5729,20,"",1],[0,527,"uns",2052,0,"",1],[0,534,"uns",6766,0,"",1],[0,546,"uns",6046,5,"",1],[0,554,"uns",3470,28,"",1],[0,559,"uns",6856,0,"",1],[0,563,"uns",5962,0,"",1],[0,590,"uns",4235,0,"",1],[0,596,"uns",7289,3,"",1],[0,597,"uns",6065,0,"",1],[0,598,"uns",6442,0,"",1],[0,606,"uns",7659,3,"",1],[0,609,"uns",5370,3,"",1],[0,617,"uns",6442,0,"",1],[0,620,"uns",7287,0,"",1],[0,629,"uns",4494,8,"",1]],"meta":{"source":"Dock_Schedule_-_Synthetic_Sample.xlsx","sheets":23,"first":"1997-08-02","last":"2019-12-31"},"demo":[[0,494,"scs",10743,29,"",0],[1,-1,"sfe",10748,0,"Community sail day",0],[0,343,"npw",10750,13,"",0],[0,274,"npw",10757,9,"",0],[1,-1,"sfe",10762,0,"Community sail day",0],[0,263,"npe",10764,10,"",0],[0,556,"sfw",10771,11,"",0],[0,246,"npf",10774,5,"",0],[1,-1,"sfe",10776,0,"Community sail day",0],[0,264,"npw",10778,17,"",0],[0,143,"npw",10785,8,"",0],[1,-1,"sfe",10790,0,"Community sail day",0],[0,108,"npe",10792,13,"",0],[1,-1,"sfe",10804,0,"Community sail day",0],[0,385,"npw",10806,18,"",0],[0,223,"sfe",10806,8,"",0],[0,448,"inc",10813,7,"",0],[1,-1,"sfe",10818,0,"Community sail day",0],[0,380,"npe",10820,8,"",0],[0,426,"sfw",10827,7,"",0],[1,-1,"sfe",10832,0,"Community sail day",0],[0,133,"scs",10841,20,"",0],[0,381,"npe",10842,14,"",0],[0,207,"sfw",10845,8,"",0],[0,580,"npw",10848,23,"",0],[0,279,"sfe",10850,9,"",0],[0,506,"npe",10851,9,"",0],[3,-1,"npe",10851,0,"Bunkering 1000",0],[0,140,"npw",10853,11,"",0],[3,-1,"npw",10853,0,"ETA 1200",0],[0,170,"npw",10855,6,"",0],[0,407,"npf",10858,4,"",0],[1,-1,"sfw",10860,0,"Public open house",0],[0,214,"inc",10862,6,"",0],[2,-1,"sfw",10865,8,"Deck resurfacing - berth closed",0],[0,210,"sfw",10866,10,"",0],[1,-1,"npf",10867,0,"Student tour",0],[0,70,"npe",10869,11,"",0],[0,202,"npe",10873,7,"",0],[0,199,"npw",10876,15,"",0],[0,584,"scs",10876,17,"",0],[3,-1,"npw",10876,0,"Arrives AM",0],[0,201,"npf",10879,5,"",0],[0,282,"sfe",10883,6,"",0],[0,185,"npw",10884,8,"",0],[1,-1,"sfw",10888,1,"Donor reception",0],[0,166,"inc",10890,4,"",0],[0,550,"npw",10897,10,"",0],[2,-1,"inc",10897,11,"Bollard replacement - no docking",0],[1,-1,"sfe",10902,0,"Rescue drill",0],[0,289,"npe",10904,15,"",0],[0,579,"npw",10911,20,"",0],[0,431,"npf",10915,3,"",0],[0,29,"sfe",10926,13,"",0],[0,447,"npe",10932,12,"",0],[0,162,"sfe",10961,10,"",0],[0,616,"npw",10967,19,"",0],[2,-1,"npf",10968,17,"Float rebuild - no usage permitted",0],[0,69,"npe",10975,11,"",0],[0,339,"scs",10989,23,"",0],[0,367,"npw",10995,14,"",0],[0,375,"npf",11003,4,"",0],[0,575,"sfw",11009,8,"",0],[0,181,"npe",11017,9,"",0],[0,530,"inc",11024,5,"",0],[1,-1,"npf",11035,0,"Science stroll",0]],"demo_meta":{"today":"2026-09-22","from":"2026-05-01","to":"2027-03-31"}}</script>
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   Berth — dock scheduling for Harborview Marine Research Center
+   Model: continuous berth allocation. A berth is a run of linear feet,
+   not a slot. A reservation occupies [position, position + LOA + clearance]
+   for a span of days. Conflicts are rectangle overlaps in space-time.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const SEED = JSON.parse(document.getElementById('seed').textContent);
+const EPOCH = new Date(SEED.epoch + 'T00:00:00');
+const DAYMS = 86400000;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const d2n = d => Math.round((d - EPOCH) / DAYMS);
+const n2d = n => new Date(EPOCH.getTime() + n * DAYMS);
+const iso = n => n2d(n).toISOString().slice(0, 10);
+const fmt = n => { const d = n2d(n); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+const fmtShort = n => { const d = n2d(n); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ── berth geometry rules ─────────────────────────────────────────────
+   A berth should be roughly 10% longer than the vessel moored at it, so
+   each vessel reserves its LOA plus a clearance of 10% (never under 8 ft),
+   half of it falling either side of the hull. */
+const clearanceFt = loa => Math.max(8, Math.round(loa * 0.10));
+const footprintFt = loa => loa + clearanceFt(loa);
+
+/* ═════════════ model ═════════════ */
+const BERTHS = SEED.berths.map(b => ({...b}));
+const BERTH = Object.fromEntries(BERTHS.map(b => [b.id, b]));
+const LINEAR = BERTHS.filter(b => b.type === 'linear');
+
+const VESSELS = SEED.vessels.map((v, i) => ({
+  id: i, name: v[0], loa: v[1], draft: v[2], op: v[3], contact: v[4], email: v[5], src: v[6]
+}));
+const VBYNAME = new Map(VESSELS.map(v => [v.name.toLowerCase(), v]));
+
+const KINDS = ['vessel', 'event', 'closure', 'note'];
+let RES = SEED.res.map((r, i) => ({
+  id: 'i' + i, kind: KINDS[r[0]], vid: r[1] >= 0 ? r[1] : null, berth: r[2],
+  s: r[3], e: r[3] + r[4], label: r[5] || null, unplaced: !!r[6], src: 'import'
+}));
+
+/* ═════════════ local edits (this browser only) ═════════════ */
+const LS = 'berth.hmrc.v1';
+let EDITS = { added: [], loa: {}, removed: [], vessels: [] };
+try { const raw = localStorage.getItem(LS); if (raw) EDITS = Object.assign(EDITS, JSON.parse(raw)); } catch (e) {}
+function persist() { try { localStorage.setItem(LS, JSON.stringify(EDITS)); } catch (e) {} }
+
+function applyEdits() {
+  for (const nv of (EDITS.vessels || [])) {
+    if (VBYNAME.has(nv.name.toLowerCase())) continue;
+    const v = { id: VESSELS.length, name: nv.name, loa: nv.loa ?? null, draft: null,
+                op: null, contact: null, email: null, src: 'added' };
+    VESSELS.push(v); VBYNAME.set(v.name.toLowerCase(), v);
+  }
+  for (const [name, loa] of Object.entries(EDITS.loa)) {
+    const v = VBYNAME.get(name.toLowerCase());
+    if (v) { v.loa = loa; v.src = v.src === 'registry' ? 'registry' : 'measured'; v.measured = true; }
+  }
+  const rm = new Set(EDITS.removed);
+  RES = RES.filter(r => !rm.has(r.id));
+  for (const a of EDITS.added) if (!RES.some(r => r.id === a.id)) RES.push({...a, src: 'app'});
+}
+applyEdits();
+
+/* ── the worked example season ─────────────────────────────────────────
+   The import stops on 31 Dec 2019, so a waterfront opened today would be
+   empty. This is a made-up season of bookings around the current date, kept
+   apart from the imported record and switchable. The vessel lengths in it
+   are real — every measured vessel is one the workbook's register already
+   carries a length for — and a few regulars with no length are in there on
+   purpose, because that is the fleet's normal state. */
+const DEMO = (SEED.demo || []).map((r, i) => ({
+  id: 'd' + i, kind: KINDS[r[0]], vid: r[1] >= 0 ? r[1] : null, berth: r[2],
+  s: r[3], e: r[3] + r[4], label: r[5] || null, unplaced: !!r[6], src: 'demo'
+}));
+let DEMO_ON = true;
+try { DEMO_ON = localStorage.getItem(LS + '.demo') !== '0'; } catch (e) {}
+function applyDemo() {
+  const gone = new Set(EDITS.removed || []);
+  RES = RES.filter(r => r.src !== 'demo');
+  if (DEMO_ON) RES = RES.concat(DEMO.filter(r => !gone.has(r.id)));
+}
+applyDemo();
+
+const vesselOf = r => r.vid != null ? VESSELS[r.vid] : null;
+const titleOf = r => r.label || (vesselOf(r)?.name) || 'Reservation';
+const loaOf = r => r.kind === 'vessel' ? (vesselOf(r)?.loa ?? null) : null;
+
+/* ═════════════ placement & conflicts ═════════════
+   Positions are assigned by a first-fit sweep: earliest arrival first,
+   each vessel pushed as far shoreward (toward 0 ft) as it will go without
+   touching a vessel already alongside during any day of its stay. A vessel
+   keeps one position for the whole stay — nobody shifts a made-fast boat
+   to make room for the next arrival. A reservation with no recorded length,
+   and any closure, is held to occupy the full berth: the system will not
+   guess at what it cannot measure. */
+function layout(berthId, items) {
+  const b = BERTH[berthId];
+  const L = b.len;
+  const list = items.slice().sort((x, y) => x.s - y.s || (y.e - y.s) - (x.e - x.s) || x.id.localeCompare(y.id));
+  const placed = [];
+  for (const it of list) {
+    it.y0 = 0; it.y1 = L || 1; it.full = true; it.noroom = false; it.oversize = false;
+    if (it.kind === 'note') { it.note = true; continue; }
+    const loa = loaOf(it);
+    if (!L || loa == null || it.kind === 'closure') { placed.push(it); continue; }
+    const need = footprintFt(loa);
+    if (need > L) { it.oversize = true; it.y0 = 0; it.y1 = L; placed.push(it); continue; }
+    const bars = placed.filter(p => p.s <= it.e && p.e >= it.s)
+      .map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+    let y = 0, ok = false;
+    for (const [a, c] of bars) {
+      if (a - y >= need) { ok = true; break; }
+      y = Math.max(y, c);
+    }
+    if (!ok && L - y >= need) ok = true;
+    if (ok) { it.y0 = y; it.y1 = y + need; it.full = false; }
+    else { it.noroom = true; it.y0 = 0; it.y1 = Math.min(need, L); it.full = false; }
+    placed.push(it);
+  }
+  return list;
+}
+
+function conflictsIn(berthId, items) {
+  const out = [];
+  const occ = items.filter(i => !i.note);
+  for (let i = 0; i < occ.length; i++) {
+    const a = occ[i];
+    if (a.oversize) out.push({ type: 'oversize', a, berth: berthId });
+    if (a.noroom) out.push({ type: 'noroom', a, berth: berthId });
+    for (let j = i + 1; j < occ.length; j++) {
+      const c = occ[j];
+      if (c.s > a.e || a.s > c.e) continue;
+      if (c.y0 >= a.y1 || a.y0 >= c.y1) continue;
+      out.push({
+        type: a.kind === 'closure' || c.kind === 'closure' ? 'closed' : 'overlap',
+        a, b: c, berth: berthId,
+        s: Math.max(a.s, c.s), e: Math.min(a.e, c.e)
+      });
+    }
+  }
+  return out;
+}
+
+function resFor(berthId, s, e) {
+  return RES.filter(r => r.berth === berthId && r.s <= e && r.e >= s);
+}
+
+/* Evaluate a candidate booking against the berth as it stands.
+   `probe` suppresses the search for alternatives — that search evaluates
+   other berths, and without this the two would call each other forever. */
+function evaluate(cand, asProbe) {
+  const b = BERTH[cand.berth];
+  if (!b) return { status: 'blocked', title: 'Pick a berth', detail: '' };
+  if (cand.e < cand.s) return { status: 'blocked', title: 'End date is before the start date', detail: '' };
+  const loa = cand.kind === 'vessel' ? (cand.loa ?? null) : null;
+  const items = resFor(cand.berth, cand.s, cand.e).filter(r => r.id !== cand.id);
+  // closure first — a closed berth is closed
+  const closure = items.find(r => r.kind === 'closure' && r.s <= cand.e && r.e >= cand.s);
+  if (closure && cand.kind !== 'closure') {
+    return { status: 'blocked', reason: 'closed', title: 'Berth is closed for these dates',
+      detail: `${esc(titleOf(closure))} runs ${fmtShort(closure.s)}–${fmtShort(closure.e)}. Nothing can lie alongside while it is on.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  if (b.type !== 'linear') {
+    // A slip group has no measured run, so no fit can be checked here. That is
+    // never as good an answer as a berth that has been checked, so it is
+    // reported as unverified however empty it is.
+    const clash = items.filter(r => r.kind !== 'note').length;
+    return { status: 'unverified', reason: 'slips',
+      title: 'Tracked, but nothing here can be checked',
+      detail: `${esc(b.name)} is a group of small slips, not a measured run of quay. The booking is recorded and ${clash ? `${clash} other booking${clash > 1 ? 's are' : ' is'} already in the group` : 'the group is otherwise empty'}, but no length or fit is checked.` };
+  }
+  if (loa == null) {
+    const clash = items.filter(r => r.kind !== 'note' && r.s <= cand.e && r.e >= cand.s);
+    if (clash.length) {
+      return { status: 'conflict', title: 'Cannot place — length unknown and the berth is taken',
+        detail: `${esc(clash.map(titleOf).join(', '))} ${clash.length > 1 ? 'are' : 'is'} already alongside. Without a length on file the system has to hold the whole berth, so it cannot put anything beside them.`,
+        alts: asProbe ? [] : alternatives(cand) };
+    }
+    return { status: 'unverified', reason: 'nolength', title: 'Booked, but fit is unverified',
+      detail: `No length on file for this vessel, so ${esc(b.name)} is held whole — all ${b.len}&#8242; of it — for the stay. Record a length and the system can berth others alongside.` };
+  }
+  const need = footprintFt(loa);
+  if (need > b.len) {
+    return { status: 'blocked', reason: 'toolong', title: 'Vessel is longer than the berth',
+      detail: `${loa}&#8242; plus ${clearanceFt(loa)}&#8242; clearance needs ${need}&#8242;. ${esc(b.name)} is ${b.len}&#8242;.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  // try to lay it alongside whatever is already made fast
+  const sim = items.filter(r => r.kind !== 'note').map(r => ({...r}));
+  const res = placeWithProbe(b, sim, { s: cand.s, e: cand.e, loa, kind: cand.kind });
+  if (!res.ok) {
+    return { status: 'conflict', title: 'No room alongside for these dates',
+      detail: `${esc(b.name)} has ${res.gap}&#8242; of clear quay in the largest gap; this vessel needs ${need}&#8242;.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  const used = res.usedFt, freeFt = b.len - used - need;
+  return { status: 'ok', title: 'Fits, and the dates are clear',
+    detail: `Lying from ${res.y0}&#8242; to ${res.y0 + need}&#8242; along ${esc(b.name)} (${loa}&#8242; hull, ${clearanceFt(loa)}&#8242; clearance). ${freeFt > 0 ? freeFt + '&#8242; of quay still free during the stay.' : 'The berth is full during the stay.'}`,
+    pos: res.y0 };
+}
+
+function placeWithProbe(b, others, probe) {
+  const L = b.len, need = footprintFt(probe.loa);
+  const sorted = others.slice().sort((x, y) => x.s - y.s);
+  const placed = [];
+  for (const o of sorted) {
+    const loa = loaOf(o);
+    if (loa == null || o.kind === 'closure') { placed.push({ ...o, y0: 0, y1: L }); continue; }
+    const n = footprintFt(loa);
+    const bars = placed.filter(p => p.s <= o.e && p.e >= o.s).map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+    let y = 0;
+    for (const [a, c] of bars) { if (a - y >= n) break; y = Math.max(y, c); }
+    placed.push({ ...o, y0: y, y1: Math.min(y + n, L) });
+  }
+  const bars = placed.filter(p => p.s <= probe.e && p.e >= probe.s).map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+  let y = 0, best = 0, used = 0;
+  for (const [a, c] of bars) { best = Math.max(best, a - y); if (a - y >= need) return { ok: true, y0: y, usedFt: bars.reduce((t, x) => t + (x[1] - x[0]), 0) }; y = Math.max(y, c); }
+  best = Math.max(best, L - y);
+  used = bars.reduce((t, x) => t + (x[1] - x[0]), 0);
+  if (L - y >= need) return { ok: true, y0: y, usedFt: used };
+  return { ok: false, gap: Math.max(0, best), usedFt: used };
+}
+
+/* Every berth's answer to one question, at once: the intake view a
+   coordinator actually needs when someone rings up asking for space. */
+const RANK = { ok: 0, unverified: 1, conflict: 2, blocked: 3 };
+// within 'unverified', a measured berth ranks above a slip group
+const SUBRANK = v => v.status === 'unverified' && v.reason === 'slips' ? 1 : 0;
+function availability(cand) {
+  return BERTHS.filter(b => b.type !== 'none').map(b => {
+    const v = evaluate({ ...cand, berth: b.id, id: cand.id || '__probe' }, true);
+    let free = null;
+    if (b.type === 'linear') {
+      const taken = resFor(b.id, cand.s, cand.e)
+        .filter(r => r.kind !== 'note' && r.id !== cand.id);
+      const laid = layout(b.id, taken.map(r => ({ ...r })));
+      free = b.len - laid.filter(x => !x.note)
+        .reduce((t, x) => t + Math.min(x.y1, b.len) - x.y0, 0);
+      free = Math.max(0, Math.min(b.len, free));
+    }
+    return { berth: b, verdict: v, free };
+  }).sort((x, y) => RANK[x.verdict.status] - RANK[y.verdict.status] ||
+                    SUBRANK(x.verdict) - SUBRANK(y.verdict) ||
+                    (y.free ?? -1) - (x.free ?? -1));
+}
+
+function alternatives(cand) {
+  const out = [];
+  for (const b of LINEAR) {
+    if (b.id === cand.berth) continue;
+    const r = evaluate({ ...cand, berth: b.id, id: '__alt' }, true);
+    if (r.status === 'ok') out.push({ kind: 'berth', berth: b, text: `${b.name} — ${b.len}&#8242;, clear` });
+  }
+  // next clear window on the requested berth
+  const span = cand.e - cand.s;
+  for (let k = 1; k <= 45; k++) {
+    const r = evaluate({ ...cand, s: cand.s + k, e: cand.s + k + span, id: '__alt' }, true);
+    if (r.status === 'ok') { out.push({ kind: 'dates', s: cand.s + k, e: cand.s + k + span, text: `Same berth, ${fmtShort(cand.s + k)} – ${fmtShort(cand.s + k + span)}` }); break; }
+  }
+  return out.slice(0, 4);
+}
+</script>
+
+<script>
+"use strict";
+/* ═════════════ the quay chart ═════════════
+   The whole waterfront drawn to one scale: 960 linear feet down the page,
+   time across it. Each berth is a band as deep as it is long, so North Pier
+   West really is seven times the Inner Channel. A stay is a rectangle —
+   as tall as the vessel, as wide as its days. */
+
+const FTPX = 0.55;          // pixels per foot of quay
+const LANE_MIN = 32;        // slip groups have no measured run
+const GUT = 134;            // left gutter: berth name + depth scale
+const PADR = 18, PADT = 36, PADB = 26, LANEGAP = 15;
+
+const UI = { view: 'quay', cursor: 0, zoom: 'month', sel: null };
+
+function windowRange() {
+  const d = n2d(UI.cursor);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth();
+  if (UI.zoom === 'month') {
+    const s = d2n(new Date(Date.UTC(y, m, 1)));
+    const e = d2n(new Date(Date.UTC(y, m + 1, 0)));
+    return { s, e, label: `${MONL[m]} ${y}` };
+  }
+  const q = Math.floor(m / 3) * 3;
+  const s = d2n(new Date(Date.UTC(y, q, 1)));
+  const e = d2n(new Date(Date.UTC(y, q + 3, 0)));
+  return { s, e, label: `${MON[q]}–${MON[q + 2]} ${y}` };
+}
+
+function laneHeight(b) { return b.len ? Math.max(LANE_MIN, b.len * FTPX) : LANE_MIN; }
+
+function drawChart() {
+  const { s, e, label } = windowRange();
+  const days = e - s + 1;
+  const avail = (document.getElementById('chartscroll')?.clientWidth || 1000) - GUT - PADR;
+  const dayW = UI.zoom === 'month'
+    ? Math.max(27, Math.min(46, Math.floor(avail / days)))
+    : Math.max(9.5, Math.min(19, avail / days));
+  const lanes = BERTHS.filter(b => b.type !== 'none' || RES.some(r => r.berth === b.id && r.s <= e && r.e >= s));
+  const W = GUT + days * dayW + PADR;
+  let H = PADT + PADB;
+  const tops = {};
+  for (const b of lanes) { tops[b.id] = H; H += laneHeight(b) + LANEGAP; }
+  H -= LANEGAP; H += PADB;
+
+  const P = [];
+  P.push(`<defs>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="7" height="7" style="fill:var(--water)"/>
+      <line x1="0" y1="0" x2="0" y2="7" style="stroke:var(--water-line);stroke-width:2.2"/>
+    </pattern>
+    <pattern id="hatchsig" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+      <rect width="7" height="7" style="fill:var(--sig-soft)"/>
+      <line x1="0" y1="0" x2="0" y2="7" style="stroke:var(--sig);stroke-width:1.6;opacity:.6"/>
+    </pattern>
+    <pattern id="hatchland" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" style="fill:var(--land)"/>
+      <line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--warn);stroke-width:1.3;opacity:.45"/>
+    </pattern>
+  </defs>`);
+
+  // ── day axis ───────────────────────────────────────────────────────
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  for (let i = 0; i < days; i++) {
+    const n = s + i, d = n2d(n), x = GUT + i * dayW;
+    const wknd = d.getUTCDay() === 0 || d.getUTCDay() === 6;
+    const first = d.getUTCDate() === 1;
+    if (wknd) P.push(`<rect x="${x}" y="${PADT - 16}" width="${dayW}" height="${H - PADT - PADB + 16}" style="fill:var(--sunk);opacity:.5"/>`);
+    if (first && i > 0) P.push(`<line x1="${x}" y1="${PADT - 20}" x2="${x}" y2="${H - PADB}" style="stroke:var(--rule);stroke-width:1.3"/>`);
+    if (n === today) P.push(`<rect x="${x}" y="${PADT - 20}" width="${dayW}" height="${H - PADT - PADB + 20}" style="fill:var(--sig);opacity:.10"/><line x1="${x}" y1="${PADT - 20}" x2="${x}" y2="${H - PADB}" style="stroke:var(--sig);stroke-width:1.5"/>`);
+    if (UI.zoom === 'month') {
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 20}" text-anchor="middle" style="font-family:var(--ff-data);font-size:9.5px;fill:${wknd ? 'var(--ink-3)' : 'var(--ink-2)'}">${d.getUTCDate()}</text>`);
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 8}" text-anchor="middle" style="font-family:var(--ff-ui);font-size:8.5px;letter-spacing:.04em;fill:var(--ink-3)">${'SMTWTFS'[d.getUTCDay()]}</text>`);
+    } else if (d.getUTCDate() === 1) {
+      P.push(`<text x="${x + 4}" y="${PADT - 10}" style="font-family:var(--ff-ui);font-size:11px;font-weight:600;fill:var(--ink-2)">${MONL[d.getUTCMonth()]}</text>`);
+    } else if (d.getUTCDate() % 7 === 1) {
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 10}" text-anchor="middle" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-3)">${d.getUTCDate()}</text>`);
+    }
+  }
+
+  const blocks = [];
+  let allConf = [];
+
+  // ── lanes ──────────────────────────────────────────────────────────
+  for (const b of lanes) {
+    const top = tops[b.id], h = laneHeight(b), L = b.len;
+    const items = layout(b.id, resFor(b.id, s, e).map(r => ({ ...r })));
+    const conf = conflictsIn(b.id, items);
+    allConf = allConf.concat(conf);
+    const inConflict = new Set();
+    conf.forEach(c => { inConflict.add(c.a.id); if (c.b) inConflict.add(c.b.id); });
+
+    // water ground
+    P.push(`<rect x="${GUT}" y="${top}" width="${days * dayW}" height="${h}" style="fill:var(--water);opacity:.55"/>`);
+    // quay edge (shoreward, 0 ft)
+    P.push(`<line x1="${GUT}" y1="${top}" x2="${GUT + days * dayW}" y2="${top}" style="stroke:var(--ink-3);stroke-width:1.6"/>`);
+    P.push(`<line x1="${GUT}" y1="${top + h}" x2="${GUT + days * dayW}" y2="${top + h}" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:2 3"/>`);
+
+    // depth scale in feet
+    if (L) {
+      for (let ft = 50; ft < L; ft += 50) {
+        const y = top + ft * FTPX;
+        P.push(`<line x1="${GUT}" y1="${y}" x2="${GUT + days * dayW}" y2="${y}" style="stroke:var(--water-line);stroke-width:.5;opacity:.3"/>`);
+        if (ft % 100 === 0 && L - ft > 28)
+          P.push(`<text x="${GUT - 8}" y="${y + 3}" text-anchor="end" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-3)">${ft}</text>`);
+      }
+      P.push(`<text x="${GUT - 8}" y="${top + h - 1}" text-anchor="end" style="font-family:var(--ff-data);font-size:9px;font-weight:600;fill:var(--ink-2)">${L}&#8242;</text>`);
+    }
+
+    // berth name — chart convention: water features labelled in italic
+    P.push(`<text x="${GUT - 8}" y="${top + 12}" text-anchor="end" style="font-family:var(--ff-chart);font-style:italic;font-size:${L && L > 120 ? 14 : 12.5}px;font-weight:500;fill:var(--ink)">${esc(b.name)}</text>`);
+    if (!L) P.push(`<text x="${GUT - 8}" y="${top + 24}" text-anchor="end" style="font-family:var(--ff-ui);font-size:8.5px;letter-spacing:.05em;fill:var(--ink-3)">NO MEASURED RUN</text>`);
+
+    // reservations
+    for (const it of items) {
+      const x0 = GUT + Math.max(0, it.s - s) * dayW;
+      const x1 = GUT + (Math.min(e, it.e) - s + 1) * dayW;
+      const w = Math.max(3, x1 - x0);
+      const bad = inConflict.has(it.id);
+      if (it.note) {
+        P.push(`<g class="blk" data-id="${it.id}"><rect x="${x0}" y="${top + h - 7}" width="${w}" height="6" rx="1.5" style="fill:var(--ink-3);opacity:.34"/></g>`);
+        blocks.push(it); continue;
+      }
+      const y0 = top + (L ? it.y0 * FTPX : 0);
+      const y1 = top + (L ? Math.min(it.y1, L) * FTPX : h);
+      const bh = Math.max(7, y1 - y0);
+      let fill, stroke, dash = '';
+      if (it.kind === 'closure') { fill = 'url(#hatchsig)'; stroke = 'var(--sig)'; dash = 'stroke-dasharray:4 2;'; }
+      else if (it.kind === 'event') { fill = 'url(#hatchland)'; stroke = 'var(--warn)'; }
+      else if (it.full) { fill = 'url(#hatch)'; stroke = 'var(--water-line)'; dash = 'stroke-dasharray:5 3;'; }
+      else { fill = 'var(--hull-fill)'; stroke = 'var(--hull)'; }
+      P.push(`<g class="blk" data-id="${it.id}" style="cursor:pointer">`);
+      P.push(`<rect x="${x0 + .8}" y="${y0 + .8}" width="${w - 1.6}" height="${bh - 1.6}" rx="2.5"
+        style="fill:${fill};stroke:${bad ? 'var(--sig)' : stroke};stroke-width:${bad ? 2 : 1.1};${dash}"/>`);
+      if (bad) P.push(`<rect x="${x0 + .8}" y="${y0 + .8}" width="${w - 1.6}" height="${bh - 1.6}" rx="2.5" style="fill:var(--sig);opacity:.16"/>`);
+      const nm = titleOf(it);
+      if (w > 46 && bh > 12) {
+        const loa = loaOf(it);
+        const tx = x0 + 6, maxc = Math.floor((w - 12) / 5.6);
+        P.push(`<text x="${tx}" y="${y0 + Math.min(bh / 2 + 4, 14)}" style="font-family:var(--ff-ui);font-size:10.5px;font-weight:600;fill:var(--ink)">${esc(nm.length > maxc ? nm.slice(0, maxc - 1) + '…' : nm)}</text>`);
+        if (bh > 26 && w > 78) P.push(`<text x="${tx}" y="${y0 + Math.min(bh / 2 + 4, 14) + 12}" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-2)">${loa ? loa + '&#8242; LOA' : (it.kind === 'vessel' ? 'length not on file' : it.kind)}</text>`);
+      }
+      P.push(`</g>`);
+      blocks.push(it);
+    }
+
+    // conflict flags on the top rule
+    for (const c of conf) {
+      if (c.s == null) continue;
+      const cx = GUT + (Math.max(s, c.s) - s) * dayW + 2;
+      P.push(`<path d="M${cx} ${top - 4} l6 0 l-3 -7 z" style="fill:var(--sig)"/>`);
+    }
+  }
+
+  const svg = document.getElementById('chart');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = P.join('');
+  svg.querySelectorAll('.blk').forEach(g => g.addEventListener('click', ev => showPop(g.dataset.id, ev)));
+
+  // clicking open water starts a booking there
+  svg.addEventListener('click', ev => {
+    if (ev.target.closest('.blk')) return;
+    const pt = svg.getBoundingClientRect();
+    const sx = (ev.clientX - pt.left) * (W / pt.width);
+    const sy = (ev.clientY - pt.top) * (H / pt.height);
+    if (sx < GUT) return;
+    const day = s + Math.floor((sx - GUT) / dayW);
+    if (day < s || day > e) return;
+    for (const b of lanes) {
+      if (b.type === 'none') continue;
+      if (sy >= tops[b.id] && sy <= tops[b.id] + laneHeight(b)) {
+        openBooking({ berth: b.id, s: day, e: day + 2 });
+        return;
+      }
+    }
+  });
+
+  document.getElementById('monthlabel').textContent = label;
+  renderQuayStats(s, e, allConf);
+  renderConflictTable(allConf);
+  renderDayBoard();
+}
+
+/* ═════════════ the operational day ═════════════
+   The chart plans; this answers "what is happening right now". */
+function renderDayBoard() {
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  const soon = today + 7;
+  const occ = RES.filter(r => r.kind !== 'note' && r.berth !== 'uns');
+  const now = occ.filter(r => r.s <= today && r.e >= today);
+  const arr = occ.filter(r => r.s > today && r.s <= soon).sort((a, b) => a.s - b.s);
+  const dep = occ.filter(r => r.e >= today && r.e <= soon && r.s <= today).sort((a, b) => a.e - b.e);
+  const row = (r, when) => `<li><button data-goto="${r.id}">
+      <span class="nm">${esc(titleOf(r))}</span>
+      <span class="at">${esc(BERTH[r.berth].name.replace('North Pier', 'N. Pier').replace('South Float', 'S. Float'))}${when ? ' &middot; ' + when : ''}</span>
+    </button></li>`;
+  const col = (title, n, items, empty) => `<section><h4>${title} <b>${n}</b></h4>
+    ${items.length ? `<ul>${items.join('')}</ul>` : `<div class="none">${empty}</div>`}</section>`;
+  document.getElementById('dayboard').innerHTML =
+    col('Alongside now', now.length, now.slice(0, 5).map(r => row(r, 'to ' + fmtShort(r.e))), 'Nothing alongside') +
+    col('Arriving in 7 days', arr.length, arr.slice(0, 5).map(r => row(r, fmtShort(r.s))), 'No arrivals booked') +
+    col('Departing in 7 days', dep.length, dep.slice(0, 5).map(r => row(r, fmtShort(r.e))), 'No departures due');
+  document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => {
+    const r = RES.find(x => x.id === b.dataset.goto);
+    if (!r) return;
+    UI.cursor = r.s; drawChart();
+  });
+}
+
+/* ═════════════ stats under the chart ═════════════ */
+function renderQuayStats(s, e, conf) {
+  const days = e - s + 1;
+  let ftDays = 0, capFtDays = 0, held = 0, unknownHeld = 0, occDays = 0, berthDays = 0;
+  for (const b of LINEAR) {
+    capFtDays += b.len * days; berthDays += days;
+    const items = layout(b.id, resFor(b.id, s, e).map(r => ({ ...r })));
+    const seen = new Set();
+    for (const it of items) {
+      if (it.note) continue;
+      const span = Math.min(e, it.e) - Math.max(s, it.s) + 1;
+      const ft = it.full ? b.len : (it.y1 - it.y0);
+      ftDays += ft * span;
+      if (it.full && it.kind === 'vessel') { unknownHeld += ft * span; held++; }
+      for (let d = Math.max(s, it.s); d <= Math.min(e, it.e); d++) seen.add(b.id + ':' + d);
+    }
+    occDays += seen.size;
+  }
+  const el = document.getElementById('quaystats');
+  const pct = x => Math.round(x * 100) + '%';
+  el.innerHTML = [
+    ['Berth-days used', `${occDays} / ${berthDays}`, pct(occDays / berthDays) + ' of the calendar', ''],
+    ['Quay held', pct(ftDays / capFtDays), `of ${LINEAR.reduce((t, b) => t + b.len, 0)}&#8242; × ${days} days`, ''],
+    ['Held on an unknown length', pct(unknownHeld / Math.max(ftDays, 1)), `${held} stay${held === 1 ? '' : 's'} with no LOA on file`, unknownHeld / Math.max(ftDays, 1) > .5 ? 'sig' : ''],
+    ['Conflicts', String(conf.length), conf.length ? 'need a decision' : 'nothing overlapping', conf.length ? 'sig' : 'ok']
+  ].map(([k, v, s2, cls]) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls}">${v}</div><div class="s">${s2}</div></div>`).join('');
+  document.getElementById('windowstat').innerHTML = `${days} days · ${LINEAR.length} measured berths · ${LINEAR.reduce((t, b) => t + b.len, 0)}&#8242; of quay`;
+}
+
+function renderConflictTable(conf) {
+  const p = document.getElementById('conflictpanel');
+  if (!conf.length) { p.hidden = true; return; }
+  p.hidden = false;
+  document.getElementById('conflictn').textContent = conf.length;
+  const LBL = { overlap: 'Both alongside', closed: 'Booked into a closure', oversize: 'Longer than the berth', noroom: 'No room alongside' };
+  document.getElementById('conflicttable').innerHTML =
+    '<thead><tr><th>Berth</th><th>What</th><th>Who</th><th>When</th></tr></thead><tbody>' +
+    conf.map(c => `<tr><td>${esc(BERTH[c.berth].name)}</td>
+      <td><span class="chip sig dot">${LBL[c.type]}</span></td>
+      <td class="vname">${esc(titleOf(c.a))}${c.b ? ' <span class="sub">and</span> ' + esc(titleOf(c.b)) : ''}</td>
+      <td class="num">${c.s != null ? fmtShort(c.s) + ' – ' + fmtShort(c.e) : fmtShort(c.a.s) + ' – ' + fmtShort(c.a.e)}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+/* ═════════════ block detail ═════════════ */
+function showPop(id, ev) {
+  const r = RES.find(x => x.id === id); if (!r) return;
+  const host = document.getElementById('pophost');
+  const v = vesselOf(r), loa = loaOf(r);
+  const kindLbl = { vessel: 'Vessel', event: 'Event', closure: 'Berth closed', note: 'Note kept in the grid' }[r.kind];
+  host.innerHTML = `<div class="popover" role="dialog" aria-label="Reservation detail">
+    <h4>${esc(titleOf(r))}</h4>
+    <div class="sub">${kindLbl} · ${esc(BERTH[r.berth].name)}</div>
+    <dl>
+      <dt>Dates</dt><dd>${fmtShort(r.s)} – ${fmtShort(r.e)}</dd>
+      <dt>Nights</dt><dd>${r.e - r.s + 1}</dd>
+      ${r.kind === 'vessel' ? `<dt>LOA</dt><dd>${loa ? loa + '&#8242;' : '<span style="color:var(--sig)">not on file</span>'}</dd>` : ''}
+      ${loa ? `<dt>Footprint</dt><dd>${footprintFt(loa)}&#8242;</dd>` : ''}
+      ${v && v.op ? `<dt>Operator</dt><dd style="font-family:var(--ff-ui);text-align:right">${esc(v.op)}</dd>` : ''}
+      <dt>Source</dt><dd style="font-family:var(--ff-ui);text-align:right">${
+        r.src === 'import' ? 'workbook' : r.src === 'demo' ? 'example season' : 'booked here'}</dd>
+    </dl>
+    <div style="display:flex;gap:7px;margin-top:11px">
+      ${r.kind === 'vessel' && !loa ? `<button class="btn sm primary" id="pop-measure">Record length</button>` : ''}
+      ${r.src !== 'import' ? `<button class="btn sm" id="pop-del">Cancel booking</button>` : ''}
+      <button class="btn sm" id="pop-close" style="margin-left:auto">Close</button>
+    </div></div>`;
+  const pop = host.firstElementChild;
+  const x = Math.min(ev.pageX + 12, window.scrollX + document.documentElement.clientWidth - 290);
+  pop.style.left = Math.max(8, x) + 'px';
+  pop.style.top = (ev.pageY + 10) + 'px';
+  document.getElementById('pop-close').onclick = () => host.innerHTML = '';
+  const m = document.getElementById('pop-measure');
+  if (m) m.onclick = () => { host.innerHTML = ''; openMeasure(v); };
+  const del = document.getElementById('pop-del');
+  if (del) del.onclick = () => {
+    EDITS.added = EDITS.added.filter(a => a.id !== r.id);
+    if (r.src === 'demo') (EDITS.removed ||= []).push(r.id);
+    RES = RES.filter(x => x.id !== r.id);
+    persist(); host.innerHTML = ''; drawChart();
+  };
+}
+document.addEventListener('click', ev => {
+  const h = document.getElementById('pophost');
+  if (h.firstElementChild && !h.contains(ev.target) && !ev.target.closest('.blk')) h.innerHTML = '';
+});
+</script>
+
+<script>
+"use strict";
+/* ═════════════ booking drawer ═════════════ */
+let DRAFT = null;
+
+function openBooking(preset) {
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  const start = preset?.s ?? Math.max(today, windowRange().s);
+  // berthPicked: the coordinator chose a berth by hand, so keep it even when
+  // the dates change. Until then the best available berth is re-chosen on
+  // every edit, so the selection never goes stale against the dates.
+  DRAFT = { kind: 'vessel', vessel: '', berth: null, berthPicked: !!preset?.berth,
+            s: start, e: start + 2, loa: null, ...preset };
+  const host = document.getElementById('drawerhost');
+  host.innerHTML = `<div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="New reservation">
+    <header><h2>New reservation</h2><button class="closeb" id="dclose" aria-label="Close">&times;</button></header>
+    <div class="scrollarea">
+      <div class="field">
+        <label for="f-kind">What is being booked</label>
+        <select id="f-kind">
+          <option value="vessel">Vessel alongside</option>
+          <option value="event">Event on the berth (sail day, open house, tour)</option>
+          <option value="closure">Berth closed (repair, inspection, crane work)</option>
+        </select>
+      </div>
+      <div class="field" id="wrap-vessel">
+        <label for="f-vessel">Vessel</label>
+        <input id="f-vessel" list="fleetlist" placeholder="Start typing, or enter a new name" autocomplete="off">
+        <datalist id="fleetlist"></datalist>
+        <div class="hint" id="vhint">&nbsp;</div>
+      </div>
+      <div class="field" id="wrap-loa" hidden>
+        <label for="f-loa">Length overall (feet)</label>
+        <input id="f-loa" type="number" min="8" max="600" step="1" placeholder="e.g. 96">
+        <div class="hint">No length on file. Enter it once and every booking for this vessel, past and future, becomes checkable.</div>
+      </div>
+      <div class="field" id="wrap-label" hidden>
+        <label for="f-label">Description</label>
+        <input id="f-label" placeholder="e.g. Community sail day">
+      </div>
+      <div class="row2">
+        <div class="field"><label for="f-s">Arrives</label><input id="f-s" type="date"></div>
+        <div class="field"><label for="f-e">Departs</label><input id="f-e" type="date"></div>
+      </div>
+      <div id="availhost"></div>
+      <div id="verdicthost"></div>
+    </div>
+    <footer>
+      <button class="btn primary" id="dsave" style="flex:1">Confirm reservation</button>
+      <button class="btn" id="dcancel">Cancel</button>
+    </footer>
+  </aside>`;
+
+  document.getElementById('fleetlist').innerHTML = VESSELS.map(v => `<option value="${esc(v.name)}">`).join('');
+  const g = id => document.getElementById(id);
+  g('f-kind').value = DRAFT.kind;
+  g('f-s').value = iso(DRAFT.s); g('f-e').value = iso(DRAFT.e);
+  g('f-vessel').value = DRAFT.vessel || '';
+  if (DRAFT.label) g('f-label').value = DRAFT.label;
+
+  ['f-kind', 'f-vessel', 'f-berth', 'f-s', 'f-e', 'f-loa', 'f-label'].forEach(id =>
+    g(id) && g(id).addEventListener('input', sync));
+  g('dclose').onclick = g('dcancel').onclick = g('scrim').onclick = closeDrawer;
+  g('dsave').onclick = saveBooking;
+  document.addEventListener('keydown', escClose);
+  sync();
+  setTimeout(() => g(DRAFT.kind === 'vessel' ? 'f-vessel' : 'f-label').focus(), 40);
+}
+function escClose(e) { if (e.key === 'Escape') closeDrawer(); }
+function closeDrawer() {
+  document.getElementById('drawerhost').innerHTML = '';
+  document.removeEventListener('keydown', escClose); DRAFT = null;
+}
+
+function statusChip(v) {
+  if (v.status === 'ok') return ['ok', 'Fits'];
+  if (v.status === 'unverified')
+    return ['warn', v.reason === 'slips' ? 'No size check' : 'Holds whole berth'];
+  if (v.status === 'conflict') return ['sig', 'Taken'];
+  return ['sig', v.reason === 'closed' ? 'Closed' : 'Too short'];
+}
+
+function sync() {
+  const g = id => document.getElementById(id);
+  DRAFT.kind = g('f-kind').value;
+  DRAFT.s = d2n(new Date(g('f-s').value + 'T00:00:00'));
+  DRAFT.e = d2n(new Date(g('f-e').value + 'T00:00:00'));
+  DRAFT.vessel = g('f-vessel').value.trim();
+  DRAFT.label = g('f-label').value.trim();
+  const isV = DRAFT.kind === 'vessel';
+  g('wrap-vessel').hidden = !isV;
+  g('wrap-label').hidden = isV;
+
+  if (isV && DRAFT.vessel) {
+    const v = VBYNAME.get(DRAFT.vessel.toLowerCase());
+    g('vhint').innerHTML = v
+      ? (v.loa ? `On the register &middot; <b>${v.loa}&#8242;</b> &middot; reserves ${footprintFt(v.loa)}&#8242; with clearance${v.op ? ' &middot; ' + esc(v.op) : ''}`
+               : `On the register &middot; <span style="color:var(--sig)">no length recorded</span>`)
+      : `New vessel &mdash; it will be added to the register`;
+    g('wrap-loa').hidden = !!(v && v.loa);
+    DRAFT.loa = (v && v.loa) ? v.loa : (parseInt(g('f-loa').value, 10) || null);
+  } else {
+    g('wrap-loa').hidden = true; g('vhint').innerHTML = '&nbsp;'; DRAFT.loa = null;
+  }
+
+  const ready = !isNaN(DRAFT.s) && !isNaN(DRAFT.e) && DRAFT.e >= DRAFT.s &&
+                (isV ? !!DRAFT.vessel : !!DRAFT.label);
+  if (!ready) {
+    g('availhost').innerHTML = `<div class="verdict" style="background:var(--surface-2);border-color:var(--rule)">
+      <div class="vh" style="color:var(--ink-3)">${isV ? 'Name a vessel and the dates' : 'Describe it and pick the dates'}</div>
+      <div class="vb" style="color:var(--ink-3)">Then every berth is checked at once.</div></div>`;
+    g('verdicthost').innerHTML = '';
+    g('dsave').disabled = true; g('dsave').style.opacity = .45; g('dsave').style.cursor = 'not-allowed';
+    return;
+  }
+
+  // Every berth's answer, best first. The coordinator picks from what works.
+  const avail = availability({ ...DRAFT, id: '__new' });
+  if (!DRAFT.berthPicked || !DRAFT.berth || !avail.some(a => a.berth.id === DRAFT.berth))
+    DRAFT.berth = (avail.find(a => a.verdict.status === 'ok') ||
+                   avail.find(a => a.berth.type === 'linear') || avail[0]).berth.id;
+  const nights = DRAFT.e - DRAFT.s + 1;
+  g('availhost').innerHTML = `
+    <div class="availhead">Where it can go
+      <span class="sub">${nights} night${nights === 1 ? '' : 's'}, ${fmtShort(DRAFT.s)} &ndash; ${fmtShort(DRAFT.e)}</span></div>
+    <div class="availlist" role="radiogroup" aria-label="Berth">
+    ${avail.map(a => {
+      const [cls, txt] = statusChip(a.verdict);
+      const on = a.berth.id === DRAFT.berth;
+      return `<button class="availrow${on ? ' on' : ''}" data-berth="${a.berth.id}"
+        role="radio" aria-checked="${on}">
+        <span class="ab-name">${esc(a.berth.name)}</span>
+        <span class="ab-len mono">${a.berth.len ? a.berth.len + '&#8242;' : 'slips'}</span>
+        <span class="ab-free mono">${a.free == null ? '' : a.free + '&#8242; free'}</span>
+        <span class="chip ${cls}">${txt}</span></button>`;
+    }).join('')}</div>`;
+  g('availhost').querySelectorAll('[data-berth]').forEach(btn =>
+    btn.onclick = () => { DRAFT.berth = btn.dataset.berth; DRAFT.berthPicked = true; sync(); });
+
+  const r = evaluate({ ...DRAFT, id: '__new' });
+  DRAFT.verdict = r;
+  const CL = { ok: 'ok', unverified: 'unk', conflict: 'bad', blocked: 'bad' };
+  const IC = { ok: '\u2713', unverified: '?', conflict: '!', blocked: '\u2715' };
+  g('verdicthost').innerHTML = `<div class="verdict ${CL[r.status]}">
+      <div class="vh"><span aria-hidden="true">${IC[r.status]}</span> ${r.title}</div>
+      <div class="vb">${r.detail}</div>
+      ${(r.alts || []).filter(a => a.kind === 'dates').map(a =>
+        `<div class="alt"><span>${a.text}</span><button class="btn sm" data-dates="1">Use</button></div>`).join('')}
+    </div>`;
+  const dbtn = g('verdicthost').querySelector('[data-dates]');
+  if (dbtn) dbtn.onclick = () => {
+    const a = r.alts.find(x => x.kind === 'dates');
+    g('f-s').value = iso(a.s); g('f-e').value = iso(a.e); sync();
+  };
+  g('dsave').disabled = r.status === 'blocked' || r.status === 'conflict';
+  g('dsave').style.opacity = g('dsave').disabled ? .45 : 1;
+  g('dsave').style.cursor = g('dsave').disabled ? 'not-allowed' : 'pointer';
+}
+
+function saveBooking() {
+  if (!DRAFT || !DRAFT.verdict || DRAFT.verdict.status === 'blocked' || DRAFT.verdict.status === 'conflict') return;
+  let vid = null;
+  if (DRAFT.kind === 'vessel') {
+    let v = VBYNAME.get(DRAFT.vessel.toLowerCase());
+    if (!v) {
+      v = { id: VESSELS.length, name: DRAFT.vessel, loa: DRAFT.loa, draft: null, op: null, contact: null, email: null, src: 'added' };
+      VESSELS.push(v); VBYNAME.set(v.name.toLowerCase(), v);
+      (EDITS.vessels ||= []).push({ name: v.name, loa: v.loa });
+    }
+    if (!v.loa && DRAFT.loa) { v.loa = DRAFT.loa; v.measured = true; EDITS.loa[v.name] = DRAFT.loa; }
+    vid = v.id;
+  }
+  const rec = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    kind: DRAFT.kind, vid, berth: DRAFT.berth, s: DRAFT.s, e: DRAFT.e,
+    label: DRAFT.kind === 'vessel' ? null : DRAFT.label, unplaced: false, src: 'app' };
+  RES.push(rec);
+  EDITS.added.push(rec); persist();
+  UI.cursor = DRAFT.s;
+  const who = DRAFT.kind === 'vessel' ? DRAFT.vessel : DRAFT.label;
+  const where = BERTH[DRAFT.berth].name;
+  closeDrawer(); setView('quay'); drawChart();
+  toast(`Reserved &mdash; ${esc(who)} on ${esc(where)}, ${fmtShort(rec.s)} to ${fmtShort(rec.e)}`);
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.innerHTML = msg;
+  t.style.cssText = `position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));
+    background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:9px;z-index:80;font-size:13px;
+    font-weight:500;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);max-width:90vw`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3600);
+}
+
+/* ═════════════ record a length ═════════════ */
+function openMeasure(v) {
+  if (!v) return;
+  const host = document.getElementById('drawerhost');
+  host.innerHTML = `<div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Record length">
+    <header><h2>Record a length</h2><button class="closeb" id="dclose" aria-label="Close">&times;</button></header>
+    <div class="scrollarea">
+      <p style="margin-top:0;color:var(--ink-2);font-size:13.5px">
+        <b style="color:var(--ink)">${esc(v.name)}</b> appears in the schedule but carries no length overall,
+        so every stay it has ever had holds the whole berth. One measurement fixes that everywhere,
+        backwards and forwards.</p>
+      <div class="field">
+        <label for="m-loa">Length overall (feet)</label>
+        <input id="m-loa" type="number" min="8" max="600" step="1" value="${v.loa || ''}" placeholder="e.g. 96">
+        <div class="hint">Bow to stern including bowsprit, davits and anything on the stern — this is what the berth has to hold.</div>
+      </div>
+      <div id="m-preview" class="sub"></div>
+    </div>
+    <footer><button class="btn primary" id="msave" style="flex:1">Save to the register</button>
+    <button class="btn" id="dcancel">Cancel</button></footer>
+  </aside>`;
+  const inp = document.getElementById('m-loa');
+  const prev = () => {
+    const n = parseInt(inp.value, 10);
+    document.getElementById('m-preview').innerHTML = n > 0
+      ? `Footprint <b class="mono">${footprintFt(n)}&#8242;</b> (${n}&#8242; hull + ${clearanceFt(n)}&#8242; clearance). Fits: ` +
+        LINEAR.map(b => `<span class="chip ${footprintFt(n) <= b.len ? 'ok' : 'mut'}" style="margin:2px 2px 0 0">${esc(b.name.replace('North Pier ', 'N. Pier ').replace('South Float ', 'S. Float '))}</span>`).join('')
+      : '';
+  };
+  inp.addEventListener('input', prev); prev();
+  document.getElementById('dclose').onclick = document.getElementById('dcancel').onclick =
+    document.getElementById('scrim').onclick = closeDrawer;
+  document.getElementById('msave').onclick = () => {
+    const n = parseInt(inp.value, 10);
+    if (!(n > 0)) return;
+    v.loa = n; v.measured = true; EDITS.loa[v.name] = n; persist();
+    closeDrawer(); drawChart(); renderFleet();
+    toast(`${esc(v.name)} recorded at ${n}&#8242; — every stay re-checked`);
+  };
+  setTimeout(() => inp.focus(), 40);
+}
+
+/* ═════════════ fleet ═════════════ */
+function berthDaysByVessel() {
+  const m = new Map();
+  for (const r of RES) {
+    if (r.kind !== 'vessel' || r.vid == null) continue;
+    m.set(r.vid, (m.get(r.vid) || 0) + (r.e - r.s + 1));
+  }
+  return m;
+}
+
+function renderFleet() {
+  const bd = berthDaysByVessel();
+  const total = [...bd.values()].reduce((a, b) => a + b, 0);
+  const scheduled = VESSELS.filter(v => bd.has(v.id));
+  const withLoa = scheduled.filter(v => v.loa);
+  const coveredDays = scheduled.filter(v => v.loa).reduce((t, v) => t + bd.get(v.id), 0);
+
+  document.getElementById('fleetstats').innerHTML = [
+    ['On the register', String(VESSELS.length), 'vessels across both register tabs'],
+    ['Seen in the schedule', String(scheduled.length), 'have at least one stay'],
+    ['Length on file', `${withLoa.length}`, `${Math.round(100 * withLoa.length / scheduled.length)}% of the scheduled fleet`, withLoa.length / scheduled.length < .5 ? 'sig' : 'ok'],
+    ['Berth-time checkable', Math.round(100 * coveredDays / Math.max(total, 1)) + '%', `${coveredDays.toLocaleString()} of ${total.toLocaleString()} berth-days`, coveredDays / total < .5 ? 'sig' : 'ok']
+  ].map(([k, v, s, cls]) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls || ''}">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  const queue = scheduled.filter(v => !v.loa).sort((a, b) => bd.get(b.id) - bd.get(a.id)).slice(0, 12);
+  let run = 0;
+  document.getElementById('queuetable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">Berth-days</th><th class="num">Share of record</th><th style="width:150px">Running total</th><th></th></tr></thead><tbody>' +
+    queue.map(v => {
+      const dd = bd.get(v.id); run += dd;
+      return `<tr><td class="vname">${esc(v.name)}</td>
+        <td class="num">${dd.toLocaleString()}</td>
+        <td class="num">${(100 * dd / total).toFixed(1)}%</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="meter" style="flex:1"><i style="width:${(100 * run / total).toFixed(1)}%"></i></div>
+          <span class="mono" style="font-size:11px;color:var(--ink-3)">${(100 * run / total).toFixed(0)}%</span></div></td>
+        <td style="text-align:right"><button class="btn sm" data-measure="${v.id}">Record length</button></td></tr>`;
+    }).join('') + '</tbody>';
+  document.querySelectorAll('[data-measure]').forEach(b =>
+    b.onclick = () => openMeasure(VESSELS[+b.dataset.measure]));
+
+  renderFleetTable();
+}
+
+function renderFleetTable() {
+  const q = (document.getElementById('fleetsearch').value || '').toLowerCase().trim();
+  const bd = berthDaysByVessel();
+  let rows = VESSELS.filter(v => !q || v.name.toLowerCase().includes(q) || (v.op || '').toLowerCase().includes(q));
+  rows.sort((a, b) => (bd.get(b.id) || 0) - (bd.get(a.id) || 0) || a.name.localeCompare(b.name));
+  document.getElementById('fleetn').textContent = `${rows.length} shown`;
+  document.getElementById('fleettable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">LOA</th><th class="num">Draft</th><th>Operator</th><th class="num">Stays</th><th class="num">Berth-days</th><th>Length source</th></tr></thead><tbody>' +
+    rows.slice(0, 220).map(v => {
+      const stays = RES.filter(r => r.vid === v.id).length;
+      const prov = v.measured ? ['ok', 'recorded here'] : v.loa ? ['ok', 'register tab'] : ['sig', 'not on file'];
+      return `<tr><td class="vname">${esc(v.name)}</td>
+        <td class="num">${v.loa ? v.loa + '&#8242;' : '<span style="color:var(--sig)">—</span>'}</td>
+        <td class="num">${v.draft ? v.draft + '&#8242;' : '<span style="color:var(--ink-3)">—</span>'}</td>
+        <td style="color:var(--ink-2)">${esc(v.op || '—')}</td>
+        <td class="num">${stays || '<span style="color:var(--ink-3)">0</span>'}</td>
+        <td class="num">${(bd.get(v.id) || 0) || '<span style="color:var(--ink-3)">0</span>'}</td>
+        <td>${v.loa ? `<span class="chip ${prov[0]}">${prov[1]}</span>`
+          : `<button class="btn sm" data-measure2="${v.id}">Record</button>`}</td></tr>`;
+    }).join('') + '</tbody>';
+  if (rows.length > 220) document.getElementById('fleettable').insertAdjacentHTML('beforeend',
+    `<tfoot><tr><td colspan="7" class="sub" style="padding:10px 12px">Showing the 220 busiest of ${rows.length} — search to narrow.</td></tr></tfoot>`);
+  document.querySelectorAll('[data-measure2]').forEach(b =>
+    b.onclick = () => openMeasure(VESSELS[+b.dataset.measure2]));
+}
+</script>
+
+<script>
+"use strict";
+/* ═════════════ import audit — computed live from the imported record ═════════════ */
+function auditData() {
+  const imported = RES.filter(r => r.src === 'import');
+  const linearIds = new Set(LINEAR.map(b => b.id));
+  const dbl = [], over = [];
+  for (const b of BERTHS) {
+    if (b.type === 'none') continue;
+    const items = layout(b.id, imported.filter(r => r.berth === b.id).map(r => ({ ...r })));
+    for (const c of conflictsIn(b.id, items)) {
+      if (c.type === 'oversize') over.push({ berth: b, r: c.a, loa: loaOf(c.a) });
+      else if (c.b) {
+        const la = loaOf(c.a), lb = loaOf(c.b);
+        dbl.push({ berth: b, a: c.a, b: c.b, s: c.s, e: c.e, type: c.type,
+          decidable: la != null && lb != null });
+      }
+    }
+  }
+  // overlaps found by the one-vessel-per-berth reading the grid implies
+  const seen = new Set(); const dblU = dbl.filter(c => {
+    const k = [c.a.id, c.b.id].sort().join('|'); if (seen.has(k)) return false; seen.add(k); return true;
+  });
+  const unplaced = imported.filter(r => r.berth === 'uns');
+  const notes = imported.filter(r => r.kind === 'note');
+  const closures = imported.filter(r => r.kind === 'closure');
+  const events = imported.filter(r => r.kind === 'event');
+  const vesselRes = imported.filter(r => r.kind === 'vessel');
+  const fleet = new Set(vesselRes.map(r => r.vid));
+  const withLoa = [...fleet].filter(id => VESSELS[id]?.loa).length;
+  const bd = new Map(); for (const r of vesselRes) bd.set(r.vid, (bd.get(r.vid) || 0) + (r.e - r.s + 1));
+  const totalBd = [...bd.values()].reduce((a, b) => a + b, 0);
+  const checkBd = [...bd.entries()].filter(([id]) => VESSELS[id]?.loa).reduce((t, [, d]) => t + d, 0);
+  return { imported, dbl: dblU, over, unplaced, notes, closures, events, vesselRes, fleet, withLoa, totalBd, checkBd, bd };
+}
+
+function renderAudit() {
+  const A = auditData();
+  const years = 2019 - 1997 + 1;
+  document.getElementById('auditstats').innerHTML = [
+    ['Reservations read', A.imported.length.toLocaleString(), `${years} year-sheets, Aug 1997 – Dec 2019`, ''],
+    ['Distinct vessels', String(A.fleet.size), `${A.withLoa} carry a length`, ''],
+    ['Berth-time checkable', Math.round(100 * A.checkBd / A.totalBd) + '%', `${A.checkBd.toLocaleString()} of ${A.totalBd.toLocaleString()} berth-days`, 'sig'],
+    ['Entries with no berth', String(A.unplaced.length), 'written into spacer rows', 'sig']
+  ].map(([k, v, s, c]) => `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  document.getElementById('dbln').textContent = A.dbl.length;
+  document.getElementById('dbltable').innerHTML =
+    '<thead><tr><th>Year</th><th>Berth</th><th>Occupants</th><th class="num">Days</th><th>Decidable</th></tr></thead><tbody>' +
+    (A.dbl.length ? A.dbl.map(c => `<tr>
+      <td class="num">${n2d(c.s).getUTCFullYear()}</td>
+      <td>${esc(c.berth.name)}</td>
+      <td class="vname">${esc(titleOf(c.a))}<br><span class="sub">${esc(titleOf(c.b))}</span></td>
+      <td class="num">${c.e - c.s + 1}</td>
+      <td>${c.decidable ? '<span class="chip ok">yes</span>' : '<span class="chip sig">no length</span>'}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="empty">none</td></tr>') + '</tbody>';
+
+  document.getElementById('overn').textContent = A.over.length;
+  const seenV = new Set();
+  const overU = A.over.filter(o => { const k = o.r.vid + '|' + o.berth.id; if (seenV.has(k)) return false; seenV.add(k); return true; });
+  document.getElementById('overtable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">LOA</th><th>Berth</th><th class="num">Berth len</th><th class="num">Short by</th></tr></thead><tbody>' +
+    (overU.length ? overU.map(o => `<tr>
+      <td class="vname">${esc(titleOf(o.r))}</td>
+      <td class="num">${o.loa}&#8242;</td>
+      <td>${esc(o.berth.name)}</td>
+      <td class="num">${o.berth.len}&#8242;</td>
+      <td class="num" style="color:var(--sig);font-weight:600">${footprintFt(o.loa) - o.berth.len}&#8242;</td></tr>`).join('')
+      : '<tr><td colspan="5" class="empty">none</td></tr>') + '</tbody>';
+
+  const checkable = [...A.fleet].filter(id => VESSELS[id]?.loa);
+  const misfit = new Set(overU.map(o => o.r.vid)).size;
+  document.getElementById('structural').innerHTML = `
+    <p><b>A cell is not a booking.</b> ${A.notes.length} entries in the grid are working notes rather than
+    reservations — <span class="mono">ETA 1200</span>, <span class="mono">Fuel truck</span>,
+    <span class="mono">Departs 0600</span>, <span class="mono">Touch and go</span>. They sit in berth rows
+    looking exactly like a vessel alongside, so any eyeball check for double-bookings has to know which is which.
+    Here they are a separate kind that occupies no space, drawn as a tick under the lane.</p>
+
+    <p><b>${A.unplaced.length} entries have no berth at all.</b> When a berth row was already
+    full, the next booking was written into the blank spacer row beneath the block. A third of those collide
+    in time with the row above them, which is the tell: the grid ran out of room and the schedule
+    quietly stopped recording where anything actually was.</p>
+
+    <p><b>229 stays were split in half by the calendar.</b> A vessel that arrived on 28 January and
+    left on 5 February is two unrelated coloured runs on two different month blocks. Nothing in the file
+    connects them, so every count of stays, every occupancy figure and every conflict check across a month
+    boundary was wrong. The importer stitches them back into single stays.</p>
+
+    <p><b>28 vessels are spelled two ways.</b> <span class="mono">Barge SALT DORY</span> and
+    <span class="mono">Barge Salt Dory</span> are one barge with 59 stays under one spelling and 42 under
+    the other. To a person reading the grid they are obviously the same; to anything that counts, they are two.</p>
+
+    <p><b>Only ${Math.round(100 * A.checkBd / A.totalBd)}% of berth-time can be checked for fit.</b>
+    The register tabs carry a length for ${A.withLoa} of the ${A.fleet.size} vessels that actually appear in the
+    schedule. Of that checkable sample, <b>${misfit} of ${checkable.length} were assigned to a berth shorter than the
+    vessel</b> — the fit check the old process asks for, run on the only evidence available, fails
+    ${Math.round(100 * misfit / Math.max(checkable.length, 1))}% of the time.</p>
+
+    <p><b>Berth-days are the wrong unit.</b> The workbook's own summary tab counts days per berth. A
+    46&#8242; launch and a 380&#8242; research vessel both spend one day on North Pier West and both count as one.
+    The waterfront is ${LINEAR.reduce((t, b) => t + b.len, 0)} feet of quay, and 410 of those feet — 43% of the
+    facility — sit behind a single row that can only ever say occupied or empty.</p>`;
+
+  document.getElementById('rules').innerHTML = `
+    <p><b>A berth is a length of quay, not a slot.</b> This is the continuous berth allocation model:
+    a reservation holds an interval of feet for an interval of days, and a conflict is two rectangles
+    overlapping in that space. Two vessels on North Pier West at once is not an error — 410 feet holds a
+    120&#8242; research vessel and a 96&#8242; supply vessel comfortably. One vessel that does not fit is an error,
+    and so is a vessel with nowhere to go.</p>
+
+    <p><b>Clearance is ten per cent.</b> A berth should be roughly a tenth longer than the vessel lying
+    at it, so every vessel reserves its LOA plus ten per cent, never less than eight feet, half of it either
+    side of the hull. A 120&#8242; vessel therefore needs 132 feet of quay.</p>
+
+    <p><b>Positions are assigned, not typed in.</b> Arrivals are laid out earliest first, each pushed as
+    far shoreward as it will go without touching a vessel already made fast during any day of its stay. A
+    vessel keeps its position for the whole visit; nothing gets shifted along the quay to make room for a
+    later arrival.</p>
+
+    <p><b>Unknown is not the same as fine.</b> A vessel with no recorded length holds the entire berth,
+    and the system says so rather than drawing a plausible-looking box. That is why most of the archive is
+    hatched. It is also why recording a length is the single highest-value action in the product — five
+    vessels account for over half of all berth-time in 23 years, and not one of them has a length on file.</p>
+
+    <p><b>Closures outrank everything.</b> Pier repair, crane access and float rebuilds block the berth
+    outright; the booking form refuses the dates and offers the berths that are open instead. In the workbook
+    these were just more text in a cell, and at least one vessel was booked straight through one.</p>`;
+}
+</script>
+
+<script>
+"use strict";
+/* ═════════════ views & boot ═════════════ */
+function setView(v) {
+  UI.view = v;
+  document.querySelectorAll('nav.tabs button').forEach(b =>
+    b.setAttribute('aria-selected', String(b.dataset.view === v)));
+  document.getElementById('view-quay').hidden = v !== 'quay';
+  document.getElementById('view-fleet').hidden = v !== 'fleet';
+  document.getElementById('view-audit').hidden = v !== 'audit';
+  if (v === 'fleet') renderFleet();
+  if (v === 'audit') renderAudit();
+  try { localStorage.setItem(LS + '.view', v); } catch (e) {}
+}
+
+function stepMonth(k) {
+  const d = n2d(UI.cursor);
+  const step = UI.zoom === 'month' ? 1 : 3;
+  UI.cursor = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k * step, 1)));
+  drawChart();
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.getElementById('prev').onclick = () => stepMonth(-1);
+document.getElementById('next').onclick = () => stepMonth(1);
+document.getElementById('today').onclick = () => {
+  UI.cursor = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  drawChart();
+  document.getElementById('chartscroll').scrollLeft = 0;
+};
+document.querySelectorAll('[data-zoom]').forEach(b => b.onclick = () => {
+  UI.zoom = b.dataset.zoom;
+  document.querySelectorAll('[data-zoom]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  drawChart();
+});
+document.getElementById('newres').onclick = () => openBooking();
+document.getElementById('fleetsearch').addEventListener('input', renderFleetTable);
+document.getElementById('dismiss-notice').onclick = () => {
+  document.getElementById('archive-notice').hidden = true;
+  try { localStorage.setItem(LS + '.notice', '1'); } catch (e) {}
+};
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea')) return;
+  if (e.key === 'ArrowLeft') stepMonth(-1);
+  if (e.key === 'ArrowRight') stepMonth(1);
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openBooking(); }
+});
+
+let rt;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (UI.view === 'quay') drawChart(); }, 180); });
+
+/* Jump straight to a year across the 23-year archive. */
+const YSEL = document.getElementById('yearjump');
+YSEL.innerHTML = '<option value="">Jump to…</option>' +
+  Array.from({ length: 2027 - 1997 + 1 }, (_, i) => 1997 + i)
+    .map(y => `<option value="${y}">${y}</option>`).join('');
+YSEL.onchange = () => {
+  if (!YSEL.value) return;
+  UI.cursor = d2n(new Date(Date.UTC(+YSEL.value, +YSEL.value >= 2020 ? 8 : 6, 1)));
+  YSEL.value = ''; drawChart();
+  document.getElementById('chartscroll').scrollLeft = 0;
+};
+
+/* The example season can be switched off to leave only the imported record. */
+const DTOG = document.getElementById('demotoggle');
+DTOG.checked = DEMO_ON;
+DTOG.onchange = () => {
+  DEMO_ON = DTOG.checked;
+  try { localStorage.setItem(LS + '.demo', DEMO_ON ? '1' : '0'); } catch (e) {}
+  applyDemo();
+  if (!DEMO_ON && !monthHasAny(UI.cursor)) UI.cursor = busiestMonth();
+  drawChart();
+  if (UI.view === 'fleet') renderFleet();
+  if (UI.view === 'audit') renderAudit();
+};
+
+function monthHasAny(cursor) {
+  const d = n2d(cursor);
+  const a = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
+  const b = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)));
+  return RES.some(r => r.berth !== 'uns' && r.s <= b && r.e >= a);
+}
+
+/* Open where the waterfront is busiest, so the first look is the real thing:
+   the month with the most berths working at once. */
+function busiestMonth() {
+  const count = new Map();
+  for (const r of RES) {
+    if (r.kind === 'note' || r.berth === 'uns') continue;
+    for (let n = r.s; n <= r.e; n += 1) {
+      const d = n2d(n), k = d.getUTCFullYear() * 12 + d.getUTCMonth();
+      count.set(k, (count.get(k) || 0) + 1);
+    }
+  }
+  let best = null, bv = -1;
+  for (const [k, v] of count) if (v > bv) { bv = v; best = k; }
+  return d2n(new Date(Date.UTC(Math.floor(best / 12), best % 12, 1)));
+}
+
+try { if (localStorage.getItem(LS + '.notice')) document.getElementById('archive-notice').hidden = true; } catch (e) {}
+/* Open on today when there is anything to see there, otherwise on the
+   busiest month of the archive — never on an empty waterfront. */
+UI.cursor = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+if (!monthHasAny(UI.cursor)) UI.cursor = busiestMonth();
+drawChart();
+let v0 = 'quay';
+try { v0 = localStorage.getItem(LS + '.view') || 'quay'; } catch (e) {}
+setView(['quay', 'fleet', 'audit'].includes(v0) ? v0 : 'quay');
+</script>

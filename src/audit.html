@@ -1,0 +1,130 @@
+<script>
+"use strict";
+/* ═════════════ import audit — computed live from the imported record ═════════════ */
+function auditData() {
+  const imported = RES.filter(r => r.src === 'import');
+  const linearIds = new Set(LINEAR.map(b => b.id));
+  const dbl = [], over = [];
+  for (const b of BERTHS) {
+    if (b.type === 'none') continue;
+    const items = layout(b.id, imported.filter(r => r.berth === b.id).map(r => ({ ...r })));
+    for (const c of conflictsIn(b.id, items)) {
+      if (c.type === 'oversize') over.push({ berth: b, r: c.a, loa: loaOf(c.a) });
+      else if (c.b) {
+        const la = loaOf(c.a), lb = loaOf(c.b);
+        dbl.push({ berth: b, a: c.a, b: c.b, s: c.s, e: c.e, type: c.type,
+          decidable: la != null && lb != null });
+      }
+    }
+  }
+  // overlaps found by the one-vessel-per-berth reading the grid implies
+  const seen = new Set(); const dblU = dbl.filter(c => {
+    const k = [c.a.id, c.b.id].sort().join('|'); if (seen.has(k)) return false; seen.add(k); return true;
+  });
+  const unplaced = imported.filter(r => r.berth === 'uns');
+  const notes = imported.filter(r => r.kind === 'note');
+  const closures = imported.filter(r => r.kind === 'closure');
+  const events = imported.filter(r => r.kind === 'event');
+  const vesselRes = imported.filter(r => r.kind === 'vessel');
+  const fleet = new Set(vesselRes.map(r => r.vid));
+  const withLoa = [...fleet].filter(id => VESSELS[id]?.loa).length;
+  const bd = new Map(); for (const r of vesselRes) bd.set(r.vid, (bd.get(r.vid) || 0) + (r.e - r.s + 1));
+  const totalBd = [...bd.values()].reduce((a, b) => a + b, 0);
+  const checkBd = [...bd.entries()].filter(([id]) => VESSELS[id]?.loa).reduce((t, [, d]) => t + d, 0);
+  return { imported, dbl: dblU, over, unplaced, notes, closures, events, vesselRes, fleet, withLoa, totalBd, checkBd, bd };
+}
+
+function renderAudit() {
+  const A = auditData();
+  const years = 2019 - 1997 + 1;
+  document.getElementById('auditstats').innerHTML = [
+    ['Reservations read', A.imported.length.toLocaleString(), `${years} year-sheets, Aug 1997 – Dec 2019`, ''],
+    ['Distinct vessels', String(A.fleet.size), `${A.withLoa} carry a length`, ''],
+    ['Berth-time checkable', Math.round(100 * A.checkBd / A.totalBd) + '%', `${A.checkBd.toLocaleString()} of ${A.totalBd.toLocaleString()} berth-days`, 'sig'],
+    ['Entries with no berth', String(A.unplaced.length), 'written into spacer rows', 'sig']
+  ].map(([k, v, s, c]) => `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  document.getElementById('dbln').textContent = A.dbl.length;
+  document.getElementById('dbltable').innerHTML =
+    '<thead><tr><th>Year</th><th>Berth</th><th>Occupants</th><th class="num">Days</th><th>Decidable</th></tr></thead><tbody>' +
+    (A.dbl.length ? A.dbl.map(c => `<tr>
+      <td class="num">${n2d(c.s).getUTCFullYear()}</td>
+      <td>${esc(c.berth.name)}</td>
+      <td class="vname">${esc(titleOf(c.a))}<br><span class="sub">${esc(titleOf(c.b))}</span></td>
+      <td class="num">${c.e - c.s + 1}</td>
+      <td>${c.decidable ? '<span class="chip ok">yes</span>' : '<span class="chip sig">no length</span>'}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="empty">none</td></tr>') + '</tbody>';
+
+  document.getElementById('overn').textContent = A.over.length;
+  const seenV = new Set();
+  const overU = A.over.filter(o => { const k = o.r.vid + '|' + o.berth.id; if (seenV.has(k)) return false; seenV.add(k); return true; });
+  document.getElementById('overtable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">LOA</th><th>Berth</th><th class="num">Berth len</th><th class="num">Short by</th></tr></thead><tbody>' +
+    (overU.length ? overU.map(o => `<tr>
+      <td class="vname">${esc(titleOf(o.r))}</td>
+      <td class="num">${o.loa}&#8242;</td>
+      <td>${esc(o.berth.name)}</td>
+      <td class="num">${o.berth.len}&#8242;</td>
+      <td class="num" style="color:var(--sig);font-weight:600">${footprintFt(o.loa) - o.berth.len}&#8242;</td></tr>`).join('')
+      : '<tr><td colspan="5" class="empty">none</td></tr>') + '</tbody>';
+
+  const checkable = [...A.fleet].filter(id => VESSELS[id]?.loa);
+  const misfit = new Set(overU.map(o => o.r.vid)).size;
+  document.getElementById('structural').innerHTML = `
+    <p><b>A cell is not a booking.</b> ${A.notes.length} entries in the grid are working notes rather than
+    reservations — <span class="mono">ETA 1200</span>, <span class="mono">Fuel truck</span>,
+    <span class="mono">Departs 0600</span>, <span class="mono">Touch and go</span>. They sit in berth rows
+    looking exactly like a vessel alongside, so any eyeball check for double-bookings has to know which is which.
+    Here they are a separate kind that occupies no space, drawn as a tick under the lane.</p>
+
+    <p><b>${A.unplaced.length} entries have no berth at all.</b> When a berth row was already
+    full, the next booking was written into the blank spacer row beneath the block. A third of those collide
+    in time with the row above them, which is the tell: the grid ran out of room and the schedule
+    quietly stopped recording where anything actually was.</p>
+
+    <p><b>229 stays were split in half by the calendar.</b> A vessel that arrived on 28 January and
+    left on 5 February is two unrelated coloured runs on two different month blocks. Nothing in the file
+    connects them, so every count of stays, every occupancy figure and every conflict check across a month
+    boundary was wrong. The importer stitches them back into single stays.</p>
+
+    <p><b>28 vessels are spelled two ways.</b> <span class="mono">Barge SALT DORY</span> and
+    <span class="mono">Barge Salt Dory</span> are one barge with 59 stays under one spelling and 42 under
+    the other. To a person reading the grid they are obviously the same; to anything that counts, they are two.</p>
+
+    <p><b>Only ${Math.round(100 * A.checkBd / A.totalBd)}% of berth-time can be checked for fit.</b>
+    The register tabs carry a length for ${A.withLoa} of the ${A.fleet.size} vessels that actually appear in the
+    schedule. Of that checkable sample, <b>${misfit} of ${checkable.length} were assigned to a berth shorter than the
+    vessel</b> — the fit check the old process asks for, run on the only evidence available, fails
+    ${Math.round(100 * misfit / Math.max(checkable.length, 1))}% of the time.</p>
+
+    <p><b>Berth-days are the wrong unit.</b> The workbook's own summary tab counts days per berth. A
+    46&#8242; launch and a 380&#8242; research vessel both spend one day on North Pier West and both count as one.
+    The waterfront is ${LINEAR.reduce((t, b) => t + b.len, 0)} feet of quay, and 410 of those feet — 43% of the
+    facility — sit behind a single row that can only ever say occupied or empty.</p>`;
+
+  document.getElementById('rules').innerHTML = `
+    <p><b>A berth is a length of quay, not a slot.</b> This is the continuous berth allocation model:
+    a reservation holds an interval of feet for an interval of days, and a conflict is two rectangles
+    overlapping in that space. Two vessels on North Pier West at once is not an error — 410 feet holds a
+    120&#8242; research vessel and a 96&#8242; supply vessel comfortably. One vessel that does not fit is an error,
+    and so is a vessel with nowhere to go.</p>
+
+    <p><b>Clearance is ten per cent.</b> A berth should be roughly a tenth longer than the vessel lying
+    at it, so every vessel reserves its LOA plus ten per cent, never less than eight feet, half of it either
+    side of the hull. A 120&#8242; vessel therefore needs 132 feet of quay.</p>
+
+    <p><b>Positions are assigned, not typed in.</b> Arrivals are laid out earliest first, each pushed as
+    far shoreward as it will go without touching a vessel already made fast during any day of its stay. A
+    vessel keeps its position for the whole visit; nothing gets shifted along the quay to make room for a
+    later arrival.</p>
+
+    <p><b>Unknown is not the same as fine.</b> A vessel with no recorded length holds the entire berth,
+    and the system says so rather than drawing a plausible-looking box. That is why most of the archive is
+    hatched. It is also why recording a length is the single highest-value action in the product — five
+    vessels account for over half of all berth-time in 23 years, and not one of them has a length on file.</p>
+
+    <p><b>Closures outrank everything.</b> Pier repair, crane access and float rebuilds block the berth
+    outright; the booking form refuses the dates and offers the berths that are open instead. In the workbook
+    these were just more text in a cell, and at least one vessel was booked straight through one.</p>`;
+}
+</script>

@@ -1,0 +1,308 @@
+<script>
+"use strict";
+/* ═════════════ booking drawer ═════════════ */
+let DRAFT = null;
+
+function openBooking(preset) {
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  const start = preset?.s ?? Math.max(today, windowRange().s);
+  // berthPicked: the coordinator chose a berth by hand, so keep it even when
+  // the dates change. Until then the best available berth is re-chosen on
+  // every edit, so the selection never goes stale against the dates.
+  DRAFT = { kind: 'vessel', vessel: '', berth: null, berthPicked: !!preset?.berth,
+            s: start, e: start + 2, loa: null, ...preset };
+  const host = document.getElementById('drawerhost');
+  host.innerHTML = `<div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="New reservation">
+    <header><h2>New reservation</h2><button class="closeb" id="dclose" aria-label="Close">&times;</button></header>
+    <div class="scrollarea">
+      <div class="field">
+        <label for="f-kind">What is being booked</label>
+        <select id="f-kind">
+          <option value="vessel">Vessel alongside</option>
+          <option value="event">Event on the berth (sail day, open house, tour)</option>
+          <option value="closure">Berth closed (repair, inspection, crane work)</option>
+        </select>
+      </div>
+      <div class="field" id="wrap-vessel">
+        <label for="f-vessel">Vessel</label>
+        <input id="f-vessel" list="fleetlist" placeholder="Start typing, or enter a new name" autocomplete="off">
+        <datalist id="fleetlist"></datalist>
+        <div class="hint" id="vhint">&nbsp;</div>
+      </div>
+      <div class="field" id="wrap-loa" hidden>
+        <label for="f-loa">Length overall (feet)</label>
+        <input id="f-loa" type="number" min="8" max="600" step="1" placeholder="e.g. 96">
+        <div class="hint">No length on file. Enter it once and every booking for this vessel, past and future, becomes checkable.</div>
+      </div>
+      <div class="field" id="wrap-label" hidden>
+        <label for="f-label">Description</label>
+        <input id="f-label" placeholder="e.g. Community sail day">
+      </div>
+      <div class="row2">
+        <div class="field"><label for="f-s">Arrives</label><input id="f-s" type="date"></div>
+        <div class="field"><label for="f-e">Departs</label><input id="f-e" type="date"></div>
+      </div>
+      <div id="availhost"></div>
+      <div id="verdicthost"></div>
+    </div>
+    <footer>
+      <button class="btn primary" id="dsave" style="flex:1">Confirm reservation</button>
+      <button class="btn" id="dcancel">Cancel</button>
+    </footer>
+  </aside>`;
+
+  document.getElementById('fleetlist').innerHTML = VESSELS.map(v => `<option value="${esc(v.name)}">`).join('');
+  const g = id => document.getElementById(id);
+  g('f-kind').value = DRAFT.kind;
+  g('f-s').value = iso(DRAFT.s); g('f-e').value = iso(DRAFT.e);
+  g('f-vessel').value = DRAFT.vessel || '';
+  if (DRAFT.label) g('f-label').value = DRAFT.label;
+
+  ['f-kind', 'f-vessel', 'f-berth', 'f-s', 'f-e', 'f-loa', 'f-label'].forEach(id =>
+    g(id) && g(id).addEventListener('input', sync));
+  g('dclose').onclick = g('dcancel').onclick = g('scrim').onclick = closeDrawer;
+  g('dsave').onclick = saveBooking;
+  document.addEventListener('keydown', escClose);
+  sync();
+  setTimeout(() => g(DRAFT.kind === 'vessel' ? 'f-vessel' : 'f-label').focus(), 40);
+}
+function escClose(e) { if (e.key === 'Escape') closeDrawer(); }
+function closeDrawer() {
+  document.getElementById('drawerhost').innerHTML = '';
+  document.removeEventListener('keydown', escClose); DRAFT = null;
+}
+
+function statusChip(v) {
+  if (v.status === 'ok') return ['ok', 'Fits'];
+  if (v.status === 'unverified')
+    return ['warn', v.reason === 'slips' ? 'No size check' : 'Holds whole berth'];
+  if (v.status === 'conflict') return ['sig', 'Taken'];
+  return ['sig', v.reason === 'closed' ? 'Closed' : 'Too short'];
+}
+
+function sync() {
+  const g = id => document.getElementById(id);
+  DRAFT.kind = g('f-kind').value;
+  DRAFT.s = d2n(new Date(g('f-s').value + 'T00:00:00'));
+  DRAFT.e = d2n(new Date(g('f-e').value + 'T00:00:00'));
+  DRAFT.vessel = g('f-vessel').value.trim();
+  DRAFT.label = g('f-label').value.trim();
+  const isV = DRAFT.kind === 'vessel';
+  g('wrap-vessel').hidden = !isV;
+  g('wrap-label').hidden = isV;
+
+  if (isV && DRAFT.vessel) {
+    const v = VBYNAME.get(DRAFT.vessel.toLowerCase());
+    g('vhint').innerHTML = v
+      ? (v.loa ? `On the register &middot; <b>${v.loa}&#8242;</b> &middot; reserves ${footprintFt(v.loa)}&#8242; with clearance${v.op ? ' &middot; ' + esc(v.op) : ''}`
+               : `On the register &middot; <span style="color:var(--sig)">no length recorded</span>`)
+      : `New vessel &mdash; it will be added to the register`;
+    g('wrap-loa').hidden = !!(v && v.loa);
+    DRAFT.loa = (v && v.loa) ? v.loa : (parseInt(g('f-loa').value, 10) || null);
+  } else {
+    g('wrap-loa').hidden = true; g('vhint').innerHTML = '&nbsp;'; DRAFT.loa = null;
+  }
+
+  const ready = !isNaN(DRAFT.s) && !isNaN(DRAFT.e) && DRAFT.e >= DRAFT.s &&
+                (isV ? !!DRAFT.vessel : !!DRAFT.label);
+  if (!ready) {
+    g('availhost').innerHTML = `<div class="verdict" style="background:var(--surface-2);border-color:var(--rule)">
+      <div class="vh" style="color:var(--ink-3)">${isV ? 'Name a vessel and the dates' : 'Describe it and pick the dates'}</div>
+      <div class="vb" style="color:var(--ink-3)">Then every berth is checked at once.</div></div>`;
+    g('verdicthost').innerHTML = '';
+    g('dsave').disabled = true; g('dsave').style.opacity = .45; g('dsave').style.cursor = 'not-allowed';
+    return;
+  }
+
+  // Every berth's answer, best first. The coordinator picks from what works.
+  const avail = availability({ ...DRAFT, id: '__new' });
+  if (!DRAFT.berthPicked || !DRAFT.berth || !avail.some(a => a.berth.id === DRAFT.berth))
+    DRAFT.berth = (avail.find(a => a.verdict.status === 'ok') ||
+                   avail.find(a => a.berth.type === 'linear') || avail[0]).berth.id;
+  const nights = DRAFT.e - DRAFT.s + 1;
+  g('availhost').innerHTML = `
+    <div class="availhead">Where it can go
+      <span class="sub">${nights} night${nights === 1 ? '' : 's'}, ${fmtShort(DRAFT.s)} &ndash; ${fmtShort(DRAFT.e)}</span></div>
+    <div class="availlist" role="radiogroup" aria-label="Berth">
+    ${avail.map(a => {
+      const [cls, txt] = statusChip(a.verdict);
+      const on = a.berth.id === DRAFT.berth;
+      return `<button class="availrow${on ? ' on' : ''}" data-berth="${a.berth.id}"
+        role="radio" aria-checked="${on}">
+        <span class="ab-name">${esc(a.berth.name)}</span>
+        <span class="ab-len mono">${a.berth.len ? a.berth.len + '&#8242;' : 'slips'}</span>
+        <span class="ab-free mono">${a.free == null ? '' : a.free + '&#8242; free'}</span>
+        <span class="chip ${cls}">${txt}</span></button>`;
+    }).join('')}</div>`;
+  g('availhost').querySelectorAll('[data-berth]').forEach(btn =>
+    btn.onclick = () => { DRAFT.berth = btn.dataset.berth; DRAFT.berthPicked = true; sync(); });
+
+  const r = evaluate({ ...DRAFT, id: '__new' });
+  DRAFT.verdict = r;
+  const CL = { ok: 'ok', unverified: 'unk', conflict: 'bad', blocked: 'bad' };
+  const IC = { ok: '\u2713', unverified: '?', conflict: '!', blocked: '\u2715' };
+  g('verdicthost').innerHTML = `<div class="verdict ${CL[r.status]}">
+      <div class="vh"><span aria-hidden="true">${IC[r.status]}</span> ${r.title}</div>
+      <div class="vb">${r.detail}</div>
+      ${(r.alts || []).filter(a => a.kind === 'dates').map(a =>
+        `<div class="alt"><span>${a.text}</span><button class="btn sm" data-dates="1">Use</button></div>`).join('')}
+    </div>`;
+  const dbtn = g('verdicthost').querySelector('[data-dates]');
+  if (dbtn) dbtn.onclick = () => {
+    const a = r.alts.find(x => x.kind === 'dates');
+    g('f-s').value = iso(a.s); g('f-e').value = iso(a.e); sync();
+  };
+  g('dsave').disabled = r.status === 'blocked' || r.status === 'conflict';
+  g('dsave').style.opacity = g('dsave').disabled ? .45 : 1;
+  g('dsave').style.cursor = g('dsave').disabled ? 'not-allowed' : 'pointer';
+}
+
+function saveBooking() {
+  if (!DRAFT || !DRAFT.verdict || DRAFT.verdict.status === 'blocked' || DRAFT.verdict.status === 'conflict') return;
+  let vid = null;
+  if (DRAFT.kind === 'vessel') {
+    let v = VBYNAME.get(DRAFT.vessel.toLowerCase());
+    if (!v) {
+      v = { id: VESSELS.length, name: DRAFT.vessel, loa: DRAFT.loa, draft: null, op: null, contact: null, email: null, src: 'added' };
+      VESSELS.push(v); VBYNAME.set(v.name.toLowerCase(), v);
+      (EDITS.vessels ||= []).push({ name: v.name, loa: v.loa });
+    }
+    if (!v.loa && DRAFT.loa) { v.loa = DRAFT.loa; v.measured = true; EDITS.loa[v.name] = DRAFT.loa; }
+    vid = v.id;
+  }
+  const rec = { id: 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    kind: DRAFT.kind, vid, berth: DRAFT.berth, s: DRAFT.s, e: DRAFT.e,
+    label: DRAFT.kind === 'vessel' ? null : DRAFT.label, unplaced: false, src: 'app' };
+  RES.push(rec);
+  EDITS.added.push(rec); persist();
+  UI.cursor = DRAFT.s;
+  const who = DRAFT.kind === 'vessel' ? DRAFT.vessel : DRAFT.label;
+  const where = BERTH[DRAFT.berth].name;
+  closeDrawer(); setView('quay'); drawChart();
+  toast(`Reserved &mdash; ${esc(who)} on ${esc(where)}, ${fmtShort(rec.s)} to ${fmtShort(rec.e)}`);
+}
+
+function toast(msg) {
+  const t = document.createElement('div');
+  t.innerHTML = msg;
+  t.style.cssText = `position:fixed;left:50%;transform:translateX(-50%);bottom:calc(22px + env(safe-area-inset-bottom,0px));
+    background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:9px;z-index:80;font-size:13px;
+    font-weight:500;box-shadow:0 10px 30px -10px rgba(0,0,0,.5);max-width:90vw`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3600);
+}
+
+/* ═════════════ record a length ═════════════ */
+function openMeasure(v) {
+  if (!v) return;
+  const host = document.getElementById('drawerhost');
+  host.innerHTML = `<div class="scrim" id="scrim"></div>
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Record length">
+    <header><h2>Record a length</h2><button class="closeb" id="dclose" aria-label="Close">&times;</button></header>
+    <div class="scrollarea">
+      <p style="margin-top:0;color:var(--ink-2);font-size:13.5px">
+        <b style="color:var(--ink)">${esc(v.name)}</b> appears in the schedule but carries no length overall,
+        so every stay it has ever had holds the whole berth. One measurement fixes that everywhere,
+        backwards and forwards.</p>
+      <div class="field">
+        <label for="m-loa">Length overall (feet)</label>
+        <input id="m-loa" type="number" min="8" max="600" step="1" value="${v.loa || ''}" placeholder="e.g. 96">
+        <div class="hint">Bow to stern including bowsprit, davits and anything on the stern — this is what the berth has to hold.</div>
+      </div>
+      <div id="m-preview" class="sub"></div>
+    </div>
+    <footer><button class="btn primary" id="msave" style="flex:1">Save to the register</button>
+    <button class="btn" id="dcancel">Cancel</button></footer>
+  </aside>`;
+  const inp = document.getElementById('m-loa');
+  const prev = () => {
+    const n = parseInt(inp.value, 10);
+    document.getElementById('m-preview').innerHTML = n > 0
+      ? `Footprint <b class="mono">${footprintFt(n)}&#8242;</b> (${n}&#8242; hull + ${clearanceFt(n)}&#8242; clearance). Fits: ` +
+        LINEAR.map(b => `<span class="chip ${footprintFt(n) <= b.len ? 'ok' : 'mut'}" style="margin:2px 2px 0 0">${esc(b.name.replace('North Pier ', 'N. Pier ').replace('South Float ', 'S. Float '))}</span>`).join('')
+      : '';
+  };
+  inp.addEventListener('input', prev); prev();
+  document.getElementById('dclose').onclick = document.getElementById('dcancel').onclick =
+    document.getElementById('scrim').onclick = closeDrawer;
+  document.getElementById('msave').onclick = () => {
+    const n = parseInt(inp.value, 10);
+    if (!(n > 0)) return;
+    v.loa = n; v.measured = true; EDITS.loa[v.name] = n; persist();
+    closeDrawer(); drawChart(); renderFleet();
+    toast(`${esc(v.name)} recorded at ${n}&#8242; — every stay re-checked`);
+  };
+  setTimeout(() => inp.focus(), 40);
+}
+
+/* ═════════════ fleet ═════════════ */
+function berthDaysByVessel() {
+  const m = new Map();
+  for (const r of RES) {
+    if (r.kind !== 'vessel' || r.vid == null) continue;
+    m.set(r.vid, (m.get(r.vid) || 0) + (r.e - r.s + 1));
+  }
+  return m;
+}
+
+function renderFleet() {
+  const bd = berthDaysByVessel();
+  const total = [...bd.values()].reduce((a, b) => a + b, 0);
+  const scheduled = VESSELS.filter(v => bd.has(v.id));
+  const withLoa = scheduled.filter(v => v.loa);
+  const coveredDays = scheduled.filter(v => v.loa).reduce((t, v) => t + bd.get(v.id), 0);
+
+  document.getElementById('fleetstats').innerHTML = [
+    ['On the register', String(VESSELS.length), 'vessels across both register tabs'],
+    ['Seen in the schedule', String(scheduled.length), 'have at least one stay'],
+    ['Length on file', `${withLoa.length}`, `${Math.round(100 * withLoa.length / scheduled.length)}% of the scheduled fleet`, withLoa.length / scheduled.length < .5 ? 'sig' : 'ok'],
+    ['Berth-time checkable', Math.round(100 * coveredDays / Math.max(total, 1)) + '%', `${coveredDays.toLocaleString()} of ${total.toLocaleString()} berth-days`, coveredDays / total < .5 ? 'sig' : 'ok']
+  ].map(([k, v, s, cls]) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls || ''}">${v}</div><div class="s">${s}</div></div>`).join('');
+
+  const queue = scheduled.filter(v => !v.loa).sort((a, b) => bd.get(b.id) - bd.get(a.id)).slice(0, 12);
+  let run = 0;
+  document.getElementById('queuetable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">Berth-days</th><th class="num">Share of record</th><th style="width:150px">Running total</th><th></th></tr></thead><tbody>' +
+    queue.map(v => {
+      const dd = bd.get(v.id); run += dd;
+      return `<tr><td class="vname">${esc(v.name)}</td>
+        <td class="num">${dd.toLocaleString()}</td>
+        <td class="num">${(100 * dd / total).toFixed(1)}%</td>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div class="meter" style="flex:1"><i style="width:${(100 * run / total).toFixed(1)}%"></i></div>
+          <span class="mono" style="font-size:11px;color:var(--ink-3)">${(100 * run / total).toFixed(0)}%</span></div></td>
+        <td style="text-align:right"><button class="btn sm" data-measure="${v.id}">Record length</button></td></tr>`;
+    }).join('') + '</tbody>';
+  document.querySelectorAll('[data-measure]').forEach(b =>
+    b.onclick = () => openMeasure(VESSELS[+b.dataset.measure]));
+
+  renderFleetTable();
+}
+
+function renderFleetTable() {
+  const q = (document.getElementById('fleetsearch').value || '').toLowerCase().trim();
+  const bd = berthDaysByVessel();
+  let rows = VESSELS.filter(v => !q || v.name.toLowerCase().includes(q) || (v.op || '').toLowerCase().includes(q));
+  rows.sort((a, b) => (bd.get(b.id) || 0) - (bd.get(a.id) || 0) || a.name.localeCompare(b.name));
+  document.getElementById('fleetn').textContent = `${rows.length} shown`;
+  document.getElementById('fleettable').innerHTML =
+    '<thead><tr><th>Vessel</th><th class="num">LOA</th><th class="num">Draft</th><th>Operator</th><th class="num">Stays</th><th class="num">Berth-days</th><th>Length source</th></tr></thead><tbody>' +
+    rows.slice(0, 220).map(v => {
+      const stays = RES.filter(r => r.vid === v.id).length;
+      const prov = v.measured ? ['ok', 'recorded here'] : v.loa ? ['ok', 'register tab'] : ['sig', 'not on file'];
+      return `<tr><td class="vname">${esc(v.name)}</td>
+        <td class="num">${v.loa ? v.loa + '&#8242;' : '<span style="color:var(--sig)">—</span>'}</td>
+        <td class="num">${v.draft ? v.draft + '&#8242;' : '<span style="color:var(--ink-3)">—</span>'}</td>
+        <td style="color:var(--ink-2)">${esc(v.op || '—')}</td>
+        <td class="num">${stays || '<span style="color:var(--ink-3)">0</span>'}</td>
+        <td class="num">${(bd.get(v.id) || 0) || '<span style="color:var(--ink-3)">0</span>'}</td>
+        <td>${v.loa ? `<span class="chip ${prov[0]}">${prov[1]}</span>`
+          : `<button class="btn sm" data-measure2="${v.id}">Record</button>`}</td></tr>`;
+    }).join('') + '</tbody>';
+  if (rows.length > 220) document.getElementById('fleettable').insertAdjacentHTML('beforeend',
+    `<tfoot><tr><td colspan="7" class="sub" style="padding:10px 12px">Showing the 220 busiest of ${rows.length} — search to narrow.</td></tr></tfoot>`);
+  document.querySelectorAll('[data-measure2]').forEach(b =>
+    b.onclick = () => openMeasure(VESSELS[+b.dataset.measure2]));
+}
+</script>

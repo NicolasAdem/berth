@@ -1,0 +1,297 @@
+<script>
+"use strict";
+/* ═════════════ the quay chart ═════════════
+   The whole waterfront drawn to one scale: 960 linear feet down the page,
+   time across it. Each berth is a band as deep as it is long, so North Pier
+   West really is seven times the Inner Channel. A stay is a rectangle —
+   as tall as the vessel, as wide as its days. */
+
+const FTPX = 0.55;          // pixels per foot of quay
+const LANE_MIN = 32;        // slip groups have no measured run
+const GUT = 134;            // left gutter: berth name + depth scale
+const PADR = 18, PADT = 36, PADB = 26, LANEGAP = 15;
+
+const UI = { view: 'quay', cursor: 0, zoom: 'month', sel: null };
+
+function windowRange() {
+  const d = n2d(UI.cursor);
+  const y = d.getUTCFullYear(), m = d.getUTCMonth();
+  if (UI.zoom === 'month') {
+    const s = d2n(new Date(Date.UTC(y, m, 1)));
+    const e = d2n(new Date(Date.UTC(y, m + 1, 0)));
+    return { s, e, label: `${MONL[m]} ${y}` };
+  }
+  const q = Math.floor(m / 3) * 3;
+  const s = d2n(new Date(Date.UTC(y, q, 1)));
+  const e = d2n(new Date(Date.UTC(y, q + 3, 0)));
+  return { s, e, label: `${MON[q]}–${MON[q + 2]} ${y}` };
+}
+
+function laneHeight(b) { return b.len ? Math.max(LANE_MIN, b.len * FTPX) : LANE_MIN; }
+
+function drawChart() {
+  const { s, e, label } = windowRange();
+  const days = e - s + 1;
+  const avail = (document.getElementById('chartscroll')?.clientWidth || 1000) - GUT - PADR;
+  const dayW = UI.zoom === 'month'
+    ? Math.max(27, Math.min(46, Math.floor(avail / days)))
+    : Math.max(9.5, Math.min(19, avail / days));
+  const lanes = BERTHS.filter(b => b.type !== 'none' || RES.some(r => r.berth === b.id && r.s <= e && r.e >= s));
+  const W = GUT + days * dayW + PADR;
+  let H = PADT + PADB;
+  const tops = {};
+  for (const b of lanes) { tops[b.id] = H; H += laneHeight(b) + LANEGAP; }
+  H -= LANEGAP; H += PADB;
+
+  const P = [];
+  P.push(`<defs>
+    <pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="7" height="7" style="fill:var(--water)"/>
+      <line x1="0" y1="0" x2="0" y2="7" style="stroke:var(--water-line);stroke-width:2.2"/>
+    </pattern>
+    <pattern id="hatchsig" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+      <rect width="7" height="7" style="fill:var(--sig-soft)"/>
+      <line x1="0" y1="0" x2="0" y2="7" style="stroke:var(--sig);stroke-width:1.6;opacity:.6"/>
+    </pattern>
+    <pattern id="hatchland" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="6" height="6" style="fill:var(--land)"/>
+      <line x1="0" y1="0" x2="0" y2="6" style="stroke:var(--warn);stroke-width:1.3;opacity:.45"/>
+    </pattern>
+  </defs>`);
+
+  // ── day axis ───────────────────────────────────────────────────────
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  for (let i = 0; i < days; i++) {
+    const n = s + i, d = n2d(n), x = GUT + i * dayW;
+    const wknd = d.getUTCDay() === 0 || d.getUTCDay() === 6;
+    const first = d.getUTCDate() === 1;
+    if (wknd) P.push(`<rect x="${x}" y="${PADT - 16}" width="${dayW}" height="${H - PADT - PADB + 16}" style="fill:var(--sunk);opacity:.5"/>`);
+    if (first && i > 0) P.push(`<line x1="${x}" y1="${PADT - 20}" x2="${x}" y2="${H - PADB}" style="stroke:var(--rule);stroke-width:1.3"/>`);
+    if (n === today) P.push(`<rect x="${x}" y="${PADT - 20}" width="${dayW}" height="${H - PADT - PADB + 20}" style="fill:var(--sig);opacity:.10"/><line x1="${x}" y1="${PADT - 20}" x2="${x}" y2="${H - PADB}" style="stroke:var(--sig);stroke-width:1.5"/>`);
+    if (UI.zoom === 'month') {
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 20}" text-anchor="middle" style="font-family:var(--ff-data);font-size:9.5px;fill:${wknd ? 'var(--ink-3)' : 'var(--ink-2)'}">${d.getUTCDate()}</text>`);
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 8}" text-anchor="middle" style="font-family:var(--ff-ui);font-size:8.5px;letter-spacing:.04em;fill:var(--ink-3)">${'SMTWTFS'[d.getUTCDay()]}</text>`);
+    } else if (d.getUTCDate() === 1) {
+      P.push(`<text x="${x + 4}" y="${PADT - 10}" style="font-family:var(--ff-ui);font-size:11px;font-weight:600;fill:var(--ink-2)">${MONL[d.getUTCMonth()]}</text>`);
+    } else if (d.getUTCDate() % 7 === 1) {
+      P.push(`<text x="${x + dayW / 2}" y="${PADT - 10}" text-anchor="middle" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-3)">${d.getUTCDate()}</text>`);
+    }
+  }
+
+  const blocks = [];
+  let allConf = [];
+
+  // ── lanes ──────────────────────────────────────────────────────────
+  for (const b of lanes) {
+    const top = tops[b.id], h = laneHeight(b), L = b.len;
+    const items = layout(b.id, resFor(b.id, s, e).map(r => ({ ...r })));
+    const conf = conflictsIn(b.id, items);
+    allConf = allConf.concat(conf);
+    const inConflict = new Set();
+    conf.forEach(c => { inConflict.add(c.a.id); if (c.b) inConflict.add(c.b.id); });
+
+    // water ground
+    P.push(`<rect x="${GUT}" y="${top}" width="${days * dayW}" height="${h}" style="fill:var(--water);opacity:.55"/>`);
+    // quay edge (shoreward, 0 ft)
+    P.push(`<line x1="${GUT}" y1="${top}" x2="${GUT + days * dayW}" y2="${top}" style="stroke:var(--ink-3);stroke-width:1.6"/>`);
+    P.push(`<line x1="${GUT}" y1="${top + h}" x2="${GUT + days * dayW}" y2="${top + h}" style="stroke:var(--rule);stroke-width:1;stroke-dasharray:2 3"/>`);
+
+    // depth scale in feet
+    if (L) {
+      for (let ft = 50; ft < L; ft += 50) {
+        const y = top + ft * FTPX;
+        P.push(`<line x1="${GUT}" y1="${y}" x2="${GUT + days * dayW}" y2="${y}" style="stroke:var(--water-line);stroke-width:.5;opacity:.3"/>`);
+        if (ft % 100 === 0 && L - ft > 28)
+          P.push(`<text x="${GUT - 8}" y="${y + 3}" text-anchor="end" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-3)">${ft}</text>`);
+      }
+      P.push(`<text x="${GUT - 8}" y="${top + h - 1}" text-anchor="end" style="font-family:var(--ff-data);font-size:9px;font-weight:600;fill:var(--ink-2)">${L}&#8242;</text>`);
+    }
+
+    // berth name — chart convention: water features labelled in italic
+    P.push(`<text x="${GUT - 8}" y="${top + 12}" text-anchor="end" style="font-family:var(--ff-chart);font-style:italic;font-size:${L && L > 120 ? 14 : 12.5}px;font-weight:500;fill:var(--ink)">${esc(b.name)}</text>`);
+    if (!L) P.push(`<text x="${GUT - 8}" y="${top + 24}" text-anchor="end" style="font-family:var(--ff-ui);font-size:8.5px;letter-spacing:.05em;fill:var(--ink-3)">NO MEASURED RUN</text>`);
+
+    // reservations
+    for (const it of items) {
+      const x0 = GUT + Math.max(0, it.s - s) * dayW;
+      const x1 = GUT + (Math.min(e, it.e) - s + 1) * dayW;
+      const w = Math.max(3, x1 - x0);
+      const bad = inConflict.has(it.id);
+      if (it.note) {
+        P.push(`<g class="blk" data-id="${it.id}"><rect x="${x0}" y="${top + h - 7}" width="${w}" height="6" rx="1.5" style="fill:var(--ink-3);opacity:.34"/></g>`);
+        blocks.push(it); continue;
+      }
+      const y0 = top + (L ? it.y0 * FTPX : 0);
+      const y1 = top + (L ? Math.min(it.y1, L) * FTPX : h);
+      const bh = Math.max(7, y1 - y0);
+      let fill, stroke, dash = '';
+      if (it.kind === 'closure') { fill = 'url(#hatchsig)'; stroke = 'var(--sig)'; dash = 'stroke-dasharray:4 2;'; }
+      else if (it.kind === 'event') { fill = 'url(#hatchland)'; stroke = 'var(--warn)'; }
+      else if (it.full) { fill = 'url(#hatch)'; stroke = 'var(--water-line)'; dash = 'stroke-dasharray:5 3;'; }
+      else { fill = 'var(--hull-fill)'; stroke = 'var(--hull)'; }
+      P.push(`<g class="blk" data-id="${it.id}" style="cursor:pointer">`);
+      P.push(`<rect x="${x0 + .8}" y="${y0 + .8}" width="${w - 1.6}" height="${bh - 1.6}" rx="2.5"
+        style="fill:${fill};stroke:${bad ? 'var(--sig)' : stroke};stroke-width:${bad ? 2 : 1.1};${dash}"/>`);
+      if (bad) P.push(`<rect x="${x0 + .8}" y="${y0 + .8}" width="${w - 1.6}" height="${bh - 1.6}" rx="2.5" style="fill:var(--sig);opacity:.16"/>`);
+      const nm = titleOf(it);
+      if (w > 46 && bh > 12) {
+        const loa = loaOf(it);
+        const tx = x0 + 6, maxc = Math.floor((w - 12) / 5.6);
+        P.push(`<text x="${tx}" y="${y0 + Math.min(bh / 2 + 4, 14)}" style="font-family:var(--ff-ui);font-size:10.5px;font-weight:600;fill:var(--ink)">${esc(nm.length > maxc ? nm.slice(0, maxc - 1) + '…' : nm)}</text>`);
+        if (bh > 26 && w > 78) P.push(`<text x="${tx}" y="${y0 + Math.min(bh / 2 + 4, 14) + 12}" style="font-family:var(--ff-data);font-size:9px;fill:var(--ink-2)">${loa ? loa + '&#8242; LOA' : (it.kind === 'vessel' ? 'length not on file' : it.kind)}</text>`);
+      }
+      P.push(`</g>`);
+      blocks.push(it);
+    }
+
+    // conflict flags on the top rule
+    for (const c of conf) {
+      if (c.s == null) continue;
+      const cx = GUT + (Math.max(s, c.s) - s) * dayW + 2;
+      P.push(`<path d="M${cx} ${top - 4} l6 0 l-3 -7 z" style="fill:var(--sig)"/>`);
+    }
+  }
+
+  const svg = document.getElementById('chart');
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = P.join('');
+  svg.querySelectorAll('.blk').forEach(g => g.addEventListener('click', ev => showPop(g.dataset.id, ev)));
+
+  // clicking open water starts a booking there
+  svg.addEventListener('click', ev => {
+    if (ev.target.closest('.blk')) return;
+    const pt = svg.getBoundingClientRect();
+    const sx = (ev.clientX - pt.left) * (W / pt.width);
+    const sy = (ev.clientY - pt.top) * (H / pt.height);
+    if (sx < GUT) return;
+    const day = s + Math.floor((sx - GUT) / dayW);
+    if (day < s || day > e) return;
+    for (const b of lanes) {
+      if (b.type === 'none') continue;
+      if (sy >= tops[b.id] && sy <= tops[b.id] + laneHeight(b)) {
+        openBooking({ berth: b.id, s: day, e: day + 2 });
+        return;
+      }
+    }
+  });
+
+  document.getElementById('monthlabel').textContent = label;
+  renderQuayStats(s, e, allConf);
+  renderConflictTable(allConf);
+  renderDayBoard();
+}
+
+/* ═════════════ the operational day ═════════════
+   The chart plans; this answers "what is happening right now". */
+function renderDayBoard() {
+  const today = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  const soon = today + 7;
+  const occ = RES.filter(r => r.kind !== 'note' && r.berth !== 'uns');
+  const now = occ.filter(r => r.s <= today && r.e >= today);
+  const arr = occ.filter(r => r.s > today && r.s <= soon).sort((a, b) => a.s - b.s);
+  const dep = occ.filter(r => r.e >= today && r.e <= soon && r.s <= today).sort((a, b) => a.e - b.e);
+  const row = (r, when) => `<li><button data-goto="${r.id}">
+      <span class="nm">${esc(titleOf(r))}</span>
+      <span class="at">${esc(BERTH[r.berth].name.replace('North Pier', 'N. Pier').replace('South Float', 'S. Float'))}${when ? ' &middot; ' + when : ''}</span>
+    </button></li>`;
+  const col = (title, n, items, empty) => `<section><h4>${title} <b>${n}</b></h4>
+    ${items.length ? `<ul>${items.join('')}</ul>` : `<div class="none">${empty}</div>`}</section>`;
+  document.getElementById('dayboard').innerHTML =
+    col('Alongside now', now.length, now.slice(0, 5).map(r => row(r, 'to ' + fmtShort(r.e))), 'Nothing alongside') +
+    col('Arriving in 7 days', arr.length, arr.slice(0, 5).map(r => row(r, fmtShort(r.s))), 'No arrivals booked') +
+    col('Departing in 7 days', dep.length, dep.slice(0, 5).map(r => row(r, fmtShort(r.e))), 'No departures due');
+  document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => {
+    const r = RES.find(x => x.id === b.dataset.goto);
+    if (!r) return;
+    UI.cursor = r.s; drawChart();
+  });
+}
+
+/* ═════════════ stats under the chart ═════════════ */
+function renderQuayStats(s, e, conf) {
+  const days = e - s + 1;
+  let ftDays = 0, capFtDays = 0, held = 0, unknownHeld = 0, occDays = 0, berthDays = 0;
+  for (const b of LINEAR) {
+    capFtDays += b.len * days; berthDays += days;
+    const items = layout(b.id, resFor(b.id, s, e).map(r => ({ ...r })));
+    const seen = new Set();
+    for (const it of items) {
+      if (it.note) continue;
+      const span = Math.min(e, it.e) - Math.max(s, it.s) + 1;
+      const ft = it.full ? b.len : (it.y1 - it.y0);
+      ftDays += ft * span;
+      if (it.full && it.kind === 'vessel') { unknownHeld += ft * span; held++; }
+      for (let d = Math.max(s, it.s); d <= Math.min(e, it.e); d++) seen.add(b.id + ':' + d);
+    }
+    occDays += seen.size;
+  }
+  const el = document.getElementById('quaystats');
+  const pct = x => Math.round(x * 100) + '%';
+  el.innerHTML = [
+    ['Berth-days used', `${occDays} / ${berthDays}`, pct(occDays / berthDays) + ' of the calendar', ''],
+    ['Quay held', pct(ftDays / capFtDays), `of ${LINEAR.reduce((t, b) => t + b.len, 0)}&#8242; × ${days} days`, ''],
+    ['Held on an unknown length', pct(unknownHeld / Math.max(ftDays, 1)), `${held} stay${held === 1 ? '' : 's'} with no LOA on file`, unknownHeld / Math.max(ftDays, 1) > .5 ? 'sig' : ''],
+    ['Conflicts', String(conf.length), conf.length ? 'need a decision' : 'nothing overlapping', conf.length ? 'sig' : 'ok']
+  ].map(([k, v, s2, cls]) => `<div class="stat"><div class="k">${k}</div><div class="v ${cls}">${v}</div><div class="s">${s2}</div></div>`).join('');
+  document.getElementById('windowstat').innerHTML = `${days} days · ${LINEAR.length} measured berths · ${LINEAR.reduce((t, b) => t + b.len, 0)}&#8242; of quay`;
+}
+
+function renderConflictTable(conf) {
+  const p = document.getElementById('conflictpanel');
+  if (!conf.length) { p.hidden = true; return; }
+  p.hidden = false;
+  document.getElementById('conflictn').textContent = conf.length;
+  const LBL = { overlap: 'Both alongside', closed: 'Booked into a closure', oversize: 'Longer than the berth', noroom: 'No room alongside' };
+  document.getElementById('conflicttable').innerHTML =
+    '<thead><tr><th>Berth</th><th>What</th><th>Who</th><th>When</th></tr></thead><tbody>' +
+    conf.map(c => `<tr><td>${esc(BERTH[c.berth].name)}</td>
+      <td><span class="chip sig dot">${LBL[c.type]}</span></td>
+      <td class="vname">${esc(titleOf(c.a))}${c.b ? ' <span class="sub">and</span> ' + esc(titleOf(c.b)) : ''}</td>
+      <td class="num">${c.s != null ? fmtShort(c.s) + ' – ' + fmtShort(c.e) : fmtShort(c.a.s) + ' – ' + fmtShort(c.a.e)}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+/* ═════════════ block detail ═════════════ */
+function showPop(id, ev) {
+  const r = RES.find(x => x.id === id); if (!r) return;
+  const host = document.getElementById('pophost');
+  const v = vesselOf(r), loa = loaOf(r);
+  const kindLbl = { vessel: 'Vessel', event: 'Event', closure: 'Berth closed', note: 'Note kept in the grid' }[r.kind];
+  host.innerHTML = `<div class="popover" role="dialog" aria-label="Reservation detail">
+    <h4>${esc(titleOf(r))}</h4>
+    <div class="sub">${kindLbl} · ${esc(BERTH[r.berth].name)}</div>
+    <dl>
+      <dt>Dates</dt><dd>${fmtShort(r.s)} – ${fmtShort(r.e)}</dd>
+      <dt>Nights</dt><dd>${r.e - r.s + 1}</dd>
+      ${r.kind === 'vessel' ? `<dt>LOA</dt><dd>${loa ? loa + '&#8242;' : '<span style="color:var(--sig)">not on file</span>'}</dd>` : ''}
+      ${loa ? `<dt>Footprint</dt><dd>${footprintFt(loa)}&#8242;</dd>` : ''}
+      ${v && v.op ? `<dt>Operator</dt><dd style="font-family:var(--ff-ui);text-align:right">${esc(v.op)}</dd>` : ''}
+      <dt>Source</dt><dd style="font-family:var(--ff-ui);text-align:right">${
+        r.src === 'import' ? 'workbook' : r.src === 'demo' ? 'example season' : 'booked here'}</dd>
+    </dl>
+    <div style="display:flex;gap:7px;margin-top:11px">
+      ${r.kind === 'vessel' && !loa ? `<button class="btn sm primary" id="pop-measure">Record length</button>` : ''}
+      ${r.src !== 'import' ? `<button class="btn sm" id="pop-del">Cancel booking</button>` : ''}
+      <button class="btn sm" id="pop-close" style="margin-left:auto">Close</button>
+    </div></div>`;
+  const pop = host.firstElementChild;
+  const x = Math.min(ev.pageX + 12, window.scrollX + document.documentElement.clientWidth - 290);
+  pop.style.left = Math.max(8, x) + 'px';
+  pop.style.top = (ev.pageY + 10) + 'px';
+  document.getElementById('pop-close').onclick = () => host.innerHTML = '';
+  const m = document.getElementById('pop-measure');
+  if (m) m.onclick = () => { host.innerHTML = ''; openMeasure(v); };
+  const del = document.getElementById('pop-del');
+  if (del) del.onclick = () => {
+    EDITS.added = EDITS.added.filter(a => a.id !== r.id);
+    if (r.src === 'demo') (EDITS.removed ||= []).push(r.id);
+    RES = RES.filter(x => x.id !== r.id);
+    persist(); host.innerHTML = ''; drawChart();
+  };
+}
+document.addEventListener('click', ev => {
+  const h = document.getElementById('pophost');
+  if (h.firstElementChild && !h.contains(ev.target) && !ev.target.closest('.blk')) h.innerHTML = '';
+});
+</script>

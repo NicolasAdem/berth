@@ -1,0 +1,109 @@
+<script>
+"use strict";
+/* ═════════════ views & boot ═════════════ */
+function setView(v) {
+  UI.view = v;
+  document.querySelectorAll('nav.tabs button').forEach(b =>
+    b.setAttribute('aria-selected', String(b.dataset.view === v)));
+  document.getElementById('view-quay').hidden = v !== 'quay';
+  document.getElementById('view-fleet').hidden = v !== 'fleet';
+  document.getElementById('view-audit').hidden = v !== 'audit';
+  if (v === 'fleet') renderFleet();
+  if (v === 'audit') renderAudit();
+  try { localStorage.setItem(LS + '.view', v); } catch (e) {}
+}
+
+function stepMonth(k) {
+  const d = n2d(UI.cursor);
+  const step = UI.zoom === 'month' ? 1 : 3;
+  UI.cursor = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k * step, 1)));
+  drawChart();
+}
+
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => setView(b.dataset.view));
+document.getElementById('prev').onclick = () => stepMonth(-1);
+document.getElementById('next').onclick = () => stepMonth(1);
+document.getElementById('today').onclick = () => {
+  UI.cursor = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+  drawChart();
+  document.getElementById('chartscroll').scrollLeft = 0;
+};
+document.querySelectorAll('[data-zoom]').forEach(b => b.onclick = () => {
+  UI.zoom = b.dataset.zoom;
+  document.querySelectorAll('[data-zoom]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  drawChart();
+});
+document.getElementById('newres').onclick = () => openBooking();
+document.getElementById('fleetsearch').addEventListener('input', renderFleetTable);
+document.getElementById('dismiss-notice').onclick = () => {
+  document.getElementById('archive-notice').hidden = true;
+  try { localStorage.setItem(LS + '.notice', '1'); } catch (e) {}
+};
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input,select,textarea')) return;
+  if (e.key === 'ArrowLeft') stepMonth(-1);
+  if (e.key === 'ArrowRight') stepMonth(1);
+  if (e.key === 'n' || e.key === 'N') { e.preventDefault(); openBooking(); }
+});
+
+let rt;
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (UI.view === 'quay') drawChart(); }, 180); });
+
+/* Jump straight to a year across the 23-year archive. */
+const YSEL = document.getElementById('yearjump');
+YSEL.innerHTML = '<option value="">Jump to…</option>' +
+  Array.from({ length: 2027 - 1997 + 1 }, (_, i) => 1997 + i)
+    .map(y => `<option value="${y}">${y}</option>`).join('');
+YSEL.onchange = () => {
+  if (!YSEL.value) return;
+  UI.cursor = d2n(new Date(Date.UTC(+YSEL.value, +YSEL.value >= 2020 ? 8 : 6, 1)));
+  YSEL.value = ''; drawChart();
+  document.getElementById('chartscroll').scrollLeft = 0;
+};
+
+/* The example season can be switched off to leave only the imported record. */
+const DTOG = document.getElementById('demotoggle');
+DTOG.checked = DEMO_ON;
+DTOG.onchange = () => {
+  DEMO_ON = DTOG.checked;
+  try { localStorage.setItem(LS + '.demo', DEMO_ON ? '1' : '0'); } catch (e) {}
+  applyDemo();
+  if (!DEMO_ON && !monthHasAny(UI.cursor)) UI.cursor = busiestMonth();
+  drawChart();
+  if (UI.view === 'fleet') renderFleet();
+  if (UI.view === 'audit') renderAudit();
+};
+
+function monthHasAny(cursor) {
+  const d = n2d(cursor);
+  const a = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)));
+  const b = d2n(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)));
+  return RES.some(r => r.berth !== 'uns' && r.s <= b && r.e >= a);
+}
+
+/* Open where the waterfront is busiest, so the first look is the real thing:
+   the month with the most berths working at once. */
+function busiestMonth() {
+  const count = new Map();
+  for (const r of RES) {
+    if (r.kind === 'note' || r.berth === 'uns') continue;
+    for (let n = r.s; n <= r.e; n += 1) {
+      const d = n2d(n), k = d.getUTCFullYear() * 12 + d.getUTCMonth();
+      count.set(k, (count.get(k) || 0) + 1);
+    }
+  }
+  let best = null, bv = -1;
+  for (const [k, v] of count) if (v > bv) { bv = v; best = k; }
+  return d2n(new Date(Date.UTC(Math.floor(best / 12), best % 12, 1)));
+}
+
+try { if (localStorage.getItem(LS + '.notice')) document.getElementById('archive-notice').hidden = true; } catch (e) {}
+/* Open on today when there is anything to see there, otherwise on the
+   busiest month of the archive — never on an empty waterfront. */
+UI.cursor = d2n(new Date(new Date().toISOString().slice(0, 10) + 'T00:00:00'));
+if (!monthHasAny(UI.cursor)) UI.cursor = busiestMonth();
+drawChart();
+let v0 = 'quay';
+try { v0 = localStorage.getItem(LS + '.view') || 'quay'; } catch (e) {}
+setView(['quay', 'fleet', 'audit'].includes(v0) ? v0 : 'quay');
+</script>

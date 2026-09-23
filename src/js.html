@@ -1,0 +1,268 @@
+<script>
+"use strict";
+/* ═══════════════════════════════════════════════════════════════════════
+   Berth — dock scheduling for Harborview Marine Research Center
+   Model: continuous berth allocation. A berth is a run of linear feet,
+   not a slot. A reservation occupies [position, position + LOA + clearance]
+   for a span of days. Conflicts are rectangle overlaps in space-time.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const SEED = JSON.parse(document.getElementById('seed').textContent);
+const EPOCH = new Date(SEED.epoch + 'T00:00:00');
+const DAYMS = 86400000;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const d2n = d => Math.round((d - EPOCH) / DAYMS);
+const n2d = n => new Date(EPOCH.getTime() + n * DAYMS);
+const iso = n => n2d(n).toISOString().slice(0, 10);
+const fmt = n => { const d = n2d(n); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+const fmtShort = n => { const d = n2d(n); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ── berth geometry rules ─────────────────────────────────────────────
+   A berth should be roughly 10% longer than the vessel moored at it, so
+   each vessel reserves its LOA plus a clearance of 10% (never under 8 ft),
+   half of it falling either side of the hull. */
+const clearanceFt = loa => Math.max(8, Math.round(loa * 0.10));
+const footprintFt = loa => loa + clearanceFt(loa);
+
+/* ═════════════ model ═════════════ */
+const BERTHS = SEED.berths.map(b => ({...b}));
+const BERTH = Object.fromEntries(BERTHS.map(b => [b.id, b]));
+const LINEAR = BERTHS.filter(b => b.type === 'linear');
+
+const VESSELS = SEED.vessels.map((v, i) => ({
+  id: i, name: v[0], loa: v[1], draft: v[2], op: v[3], contact: v[4], email: v[5], src: v[6]
+}));
+const VBYNAME = new Map(VESSELS.map(v => [v.name.toLowerCase(), v]));
+
+const KINDS = ['vessel', 'event', 'closure', 'note'];
+let RES = SEED.res.map((r, i) => ({
+  id: 'i' + i, kind: KINDS[r[0]], vid: r[1] >= 0 ? r[1] : null, berth: r[2],
+  s: r[3], e: r[3] + r[4], label: r[5] || null, unplaced: !!r[6], src: 'import'
+}));
+
+/* ═════════════ local edits (this browser only) ═════════════ */
+const LS = 'berth.hmrc.v1';
+let EDITS = { added: [], loa: {}, removed: [], vessels: [] };
+try { const raw = localStorage.getItem(LS); if (raw) EDITS = Object.assign(EDITS, JSON.parse(raw)); } catch (e) {}
+function persist() { try { localStorage.setItem(LS, JSON.stringify(EDITS)); } catch (e) {} }
+
+function applyEdits() {
+  for (const nv of (EDITS.vessels || [])) {
+    if (VBYNAME.has(nv.name.toLowerCase())) continue;
+    const v = { id: VESSELS.length, name: nv.name, loa: nv.loa ?? null, draft: null,
+                op: null, contact: null, email: null, src: 'added' };
+    VESSELS.push(v); VBYNAME.set(v.name.toLowerCase(), v);
+  }
+  for (const [name, loa] of Object.entries(EDITS.loa)) {
+    const v = VBYNAME.get(name.toLowerCase());
+    if (v) { v.loa = loa; v.src = v.src === 'registry' ? 'registry' : 'measured'; v.measured = true; }
+  }
+  const rm = new Set(EDITS.removed);
+  RES = RES.filter(r => !rm.has(r.id));
+  for (const a of EDITS.added) if (!RES.some(r => r.id === a.id)) RES.push({...a, src: 'app'});
+}
+applyEdits();
+
+/* ── the worked example season ─────────────────────────────────────────
+   The import stops on 31 Dec 2019, so a waterfront opened today would be
+   empty. This is a made-up season of bookings around the current date, kept
+   apart from the imported record and switchable. The vessel lengths in it
+   are real — every measured vessel is one the workbook's register already
+   carries a length for — and a few regulars with no length are in there on
+   purpose, because that is the fleet's normal state. */
+const DEMO = (SEED.demo || []).map((r, i) => ({
+  id: 'd' + i, kind: KINDS[r[0]], vid: r[1] >= 0 ? r[1] : null, berth: r[2],
+  s: r[3], e: r[3] + r[4], label: r[5] || null, unplaced: !!r[6], src: 'demo'
+}));
+let DEMO_ON = true;
+try { DEMO_ON = localStorage.getItem(LS + '.demo') !== '0'; } catch (e) {}
+function applyDemo() {
+  const gone = new Set(EDITS.removed || []);
+  RES = RES.filter(r => r.src !== 'demo');
+  if (DEMO_ON) RES = RES.concat(DEMO.filter(r => !gone.has(r.id)));
+}
+applyDemo();
+
+const vesselOf = r => r.vid != null ? VESSELS[r.vid] : null;
+const titleOf = r => r.label || (vesselOf(r)?.name) || 'Reservation';
+const loaOf = r => r.kind === 'vessel' ? (vesselOf(r)?.loa ?? null) : null;
+
+/* ═════════════ placement & conflicts ═════════════
+   Positions are assigned by a first-fit sweep: earliest arrival first,
+   each vessel pushed as far shoreward (toward 0 ft) as it will go without
+   touching a vessel already alongside during any day of its stay. A vessel
+   keeps one position for the whole stay — nobody shifts a made-fast boat
+   to make room for the next arrival. A reservation with no recorded length,
+   and any closure, is held to occupy the full berth: the system will not
+   guess at what it cannot measure. */
+function layout(berthId, items) {
+  const b = BERTH[berthId];
+  const L = b.len;
+  const list = items.slice().sort((x, y) => x.s - y.s || (y.e - y.s) - (x.e - x.s) || x.id.localeCompare(y.id));
+  const placed = [];
+  for (const it of list) {
+    it.y0 = 0; it.y1 = L || 1; it.full = true; it.noroom = false; it.oversize = false;
+    if (it.kind === 'note') { it.note = true; continue; }
+    const loa = loaOf(it);
+    if (!L || loa == null || it.kind === 'closure') { placed.push(it); continue; }
+    const need = footprintFt(loa);
+    if (need > L) { it.oversize = true; it.y0 = 0; it.y1 = L; placed.push(it); continue; }
+    const bars = placed.filter(p => p.s <= it.e && p.e >= it.s)
+      .map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+    let y = 0, ok = false;
+    for (const [a, c] of bars) {
+      if (a - y >= need) { ok = true; break; }
+      y = Math.max(y, c);
+    }
+    if (!ok && L - y >= need) ok = true;
+    if (ok) { it.y0 = y; it.y1 = y + need; it.full = false; }
+    else { it.noroom = true; it.y0 = 0; it.y1 = Math.min(need, L); it.full = false; }
+    placed.push(it);
+  }
+  return list;
+}
+
+function conflictsIn(berthId, items) {
+  const out = [];
+  const occ = items.filter(i => !i.note);
+  for (let i = 0; i < occ.length; i++) {
+    const a = occ[i];
+    if (a.oversize) out.push({ type: 'oversize', a, berth: berthId });
+    if (a.noroom) out.push({ type: 'noroom', a, berth: berthId });
+    for (let j = i + 1; j < occ.length; j++) {
+      const c = occ[j];
+      if (c.s > a.e || a.s > c.e) continue;
+      if (c.y0 >= a.y1 || a.y0 >= c.y1) continue;
+      out.push({
+        type: a.kind === 'closure' || c.kind === 'closure' ? 'closed' : 'overlap',
+        a, b: c, berth: berthId,
+        s: Math.max(a.s, c.s), e: Math.min(a.e, c.e)
+      });
+    }
+  }
+  return out;
+}
+
+function resFor(berthId, s, e) {
+  return RES.filter(r => r.berth === berthId && r.s <= e && r.e >= s);
+}
+
+/* Evaluate a candidate booking against the berth as it stands.
+   `probe` suppresses the search for alternatives — that search evaluates
+   other berths, and without this the two would call each other forever. */
+function evaluate(cand, asProbe) {
+  const b = BERTH[cand.berth];
+  if (!b) return { status: 'blocked', title: 'Pick a berth', detail: '' };
+  if (cand.e < cand.s) return { status: 'blocked', title: 'End date is before the start date', detail: '' };
+  const loa = cand.kind === 'vessel' ? (cand.loa ?? null) : null;
+  const items = resFor(cand.berth, cand.s, cand.e).filter(r => r.id !== cand.id);
+  // closure first — a closed berth is closed
+  const closure = items.find(r => r.kind === 'closure' && r.s <= cand.e && r.e >= cand.s);
+  if (closure && cand.kind !== 'closure') {
+    return { status: 'blocked', reason: 'closed', title: 'Berth is closed for these dates',
+      detail: `${esc(titleOf(closure))} runs ${fmtShort(closure.s)}–${fmtShort(closure.e)}. Nothing can lie alongside while it is on.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  if (b.type !== 'linear') {
+    // A slip group has no measured run, so no fit can be checked here. That is
+    // never as good an answer as a berth that has been checked, so it is
+    // reported as unverified however empty it is.
+    const clash = items.filter(r => r.kind !== 'note').length;
+    return { status: 'unverified', reason: 'slips',
+      title: 'Tracked, but nothing here can be checked',
+      detail: `${esc(b.name)} is a group of small slips, not a measured run of quay. The booking is recorded and ${clash ? `${clash} other booking${clash > 1 ? 's are' : ' is'} already in the group` : 'the group is otherwise empty'}, but no length or fit is checked.` };
+  }
+  if (loa == null) {
+    const clash = items.filter(r => r.kind !== 'note' && r.s <= cand.e && r.e >= cand.s);
+    if (clash.length) {
+      return { status: 'conflict', title: 'Cannot place — length unknown and the berth is taken',
+        detail: `${esc(clash.map(titleOf).join(', '))} ${clash.length > 1 ? 'are' : 'is'} already alongside. Without a length on file the system has to hold the whole berth, so it cannot put anything beside them.`,
+        alts: asProbe ? [] : alternatives(cand) };
+    }
+    return { status: 'unverified', reason: 'nolength', title: 'Booked, but fit is unverified',
+      detail: `No length on file for this vessel, so ${esc(b.name)} is held whole — all ${b.len}&#8242; of it — for the stay. Record a length and the system can berth others alongside.` };
+  }
+  const need = footprintFt(loa);
+  if (need > b.len) {
+    return { status: 'blocked', reason: 'toolong', title: 'Vessel is longer than the berth',
+      detail: `${loa}&#8242; plus ${clearanceFt(loa)}&#8242; clearance needs ${need}&#8242;. ${esc(b.name)} is ${b.len}&#8242;.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  // try to lay it alongside whatever is already made fast
+  const sim = items.filter(r => r.kind !== 'note').map(r => ({...r}));
+  const res = placeWithProbe(b, sim, { s: cand.s, e: cand.e, loa, kind: cand.kind });
+  if (!res.ok) {
+    return { status: 'conflict', title: 'No room alongside for these dates',
+      detail: `${esc(b.name)} has ${res.gap}&#8242; of clear quay in the largest gap; this vessel needs ${need}&#8242;.`,
+      alts: asProbe ? [] : alternatives(cand) };
+  }
+  const used = res.usedFt, freeFt = b.len - used - need;
+  return { status: 'ok', title: 'Fits, and the dates are clear',
+    detail: `Lying from ${res.y0}&#8242; to ${res.y0 + need}&#8242; along ${esc(b.name)} (${loa}&#8242; hull, ${clearanceFt(loa)}&#8242; clearance). ${freeFt > 0 ? freeFt + '&#8242; of quay still free during the stay.' : 'The berth is full during the stay.'}`,
+    pos: res.y0 };
+}
+
+function placeWithProbe(b, others, probe) {
+  const L = b.len, need = footprintFt(probe.loa);
+  const sorted = others.slice().sort((x, y) => x.s - y.s);
+  const placed = [];
+  for (const o of sorted) {
+    const loa = loaOf(o);
+    if (loa == null || o.kind === 'closure') { placed.push({ ...o, y0: 0, y1: L }); continue; }
+    const n = footprintFt(loa);
+    const bars = placed.filter(p => p.s <= o.e && p.e >= o.s).map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+    let y = 0;
+    for (const [a, c] of bars) { if (a - y >= n) break; y = Math.max(y, c); }
+    placed.push({ ...o, y0: y, y1: Math.min(y + n, L) });
+  }
+  const bars = placed.filter(p => p.s <= probe.e && p.e >= probe.s).map(p => [p.y0, p.y1]).sort((a, c) => a[0] - c[0]);
+  let y = 0, best = 0, used = 0;
+  for (const [a, c] of bars) { best = Math.max(best, a - y); if (a - y >= need) return { ok: true, y0: y, usedFt: bars.reduce((t, x) => t + (x[1] - x[0]), 0) }; y = Math.max(y, c); }
+  best = Math.max(best, L - y);
+  used = bars.reduce((t, x) => t + (x[1] - x[0]), 0);
+  if (L - y >= need) return { ok: true, y0: y, usedFt: used };
+  return { ok: false, gap: Math.max(0, best), usedFt: used };
+}
+
+/* Every berth's answer to one question, at once: the intake view a
+   coordinator actually needs when someone rings up asking for space. */
+const RANK = { ok: 0, unverified: 1, conflict: 2, blocked: 3 };
+// within 'unverified', a measured berth ranks above a slip group
+const SUBRANK = v => v.status === 'unverified' && v.reason === 'slips' ? 1 : 0;
+function availability(cand) {
+  return BERTHS.filter(b => b.type !== 'none').map(b => {
+    const v = evaluate({ ...cand, berth: b.id, id: cand.id || '__probe' }, true);
+    let free = null;
+    if (b.type === 'linear') {
+      const taken = resFor(b.id, cand.s, cand.e)
+        .filter(r => r.kind !== 'note' && r.id !== cand.id);
+      const laid = layout(b.id, taken.map(r => ({ ...r })));
+      free = b.len - laid.filter(x => !x.note)
+        .reduce((t, x) => t + Math.min(x.y1, b.len) - x.y0, 0);
+      free = Math.max(0, Math.min(b.len, free));
+    }
+    return { berth: b, verdict: v, free };
+  }).sort((x, y) => RANK[x.verdict.status] - RANK[y.verdict.status] ||
+                    SUBRANK(x.verdict) - SUBRANK(y.verdict) ||
+                    (y.free ?? -1) - (x.free ?? -1));
+}
+
+function alternatives(cand) {
+  const out = [];
+  for (const b of LINEAR) {
+    if (b.id === cand.berth) continue;
+    const r = evaluate({ ...cand, berth: b.id, id: '__alt' }, true);
+    if (r.status === 'ok') out.push({ kind: 'berth', berth: b, text: `${b.name} — ${b.len}&#8242;, clear` });
+  }
+  // next clear window on the requested berth
+  const span = cand.e - cand.s;
+  for (let k = 1; k <= 45; k++) {
+    const r = evaluate({ ...cand, s: cand.s + k, e: cand.s + k + span, id: '__alt' }, true);
+    if (r.status === 'ok') { out.push({ kind: 'dates', s: cand.s + k, e: cand.s + k + span, text: `Same berth, ${fmtShort(cand.s + k)} – ${fmtShort(cand.s + k + span)}` }); break; }
+  }
+  return out.slice(0, 4);
+}
+</script>
